@@ -1,0 +1,94 @@
+profile and host, token are stored in databrickscfg.
+
+databricks auth profile
+databricks auth describe --profile DEV
+databricks cluster create --json @create-compute.json --profile TEST
+
+mode development must set individual for each user
+
+base parameter like job id time should be added in base parameter in job definition yml
+and could be used by 
+dbutils.widgets.get("")
+
+```
+databricks bundle deploy -t prod --var="catalog=citibike_prod"
+```
+
+complex variable can be used by other components for reference
+```
+// complex variable
+variables:
+	var_name:
+		type: "complex"
+		default:
+			.....
+			
+// look up for one type of resource by name and retrive the id
+	all_purpose_clus:
+		lookup:
+			"cluster": "name_of_cluster"
+//ref
+${var.var_name}
+${var.all_purpose_clus}
+```
+Use parameter in py script
+```
+["{{job.id}}", "{{job.name}}"]
+
+import sys
+job_id = sys.argv[1]
+
+
+```
+Using setup tool to build whl package and it can be install on any py env or databricks cluster
+```
+from setuptools import setup, find_packages
+
+setup(
+
+name="dab_project",
+
+version="0.0.1",
+
+description="This contains code in the ./src directory for the Databricks project",
+
+package=find_packages(where="./src"),
+
+package_dir={"": "./src"},
+
+install_requires=['setuptools']
+
+)
+
+// we can import direclty
+import citibike_citibike_utils
+```
+Wheel tasks, import the whl to the cluster for the following tasks as a single task
+```
+- task_key: whl_setup
+
+python_wheel_task:
+
+package_name: dab_project
+
+entry_point: main // could be deleted if no need to expose a command
+
+job_cluster_key: whl_setup_cluster
+
+libraries:
+
+- whl: ../dist/*.whl
+```
+```
+// here doc
+cat <<EOF > ~/.databrickscfg
+
+[TEST]
+
+host = ...
+
+azure_tenant_id = ...
+
+EOF
+```
+

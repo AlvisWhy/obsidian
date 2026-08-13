@@ -154,3 +154,38 @@ FROM `qwiklabs-gcp-02-db04adbb32b7.bqml_lab.INFORMATION_SCHEMA.VECTOR_INDEXES`;
 找到语义最相似的内容
 
 
+ARRAY AGG in BQ
+```SQL
+SELECT
+  fullVisitorId,
+  date,
+  ARRAY_AGG(v2ProductName) AS products_viewed,
+  ARRAY_AGG(pageTitle) AS pages_viewed
+  FROM `data-to-insights.ecommerce.all_sessions`
+WHERE visitId = 1501570398
+GROUP BY fullVisitorId, date
+ORDER BY date
+```
+
+- finding the number of elements with `ARRAY_LENGTH(<array>)`
+- deduplicating elements with `ARRAY_AGG(DISTINCT <field>)`
+- ordering elements with `ARRAY_AGG(<field> ORDER BY <field>)`
+- limiting `ARRAY_AGG(<field> LIMIT 5)`
+
+```SQL
+SELECT DISTINCT
+  visitId,
+  h.page.pageTitle
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801`,
+UNNEST(hits) AS h
+WHERE visitId = 1501570398
+LIMIT 10
+```
+
+- You need to UNNEST() arrays to bring the array elements back into rows
+- UNNEST() always follows the table name in your FROM clause (think of it conceptually like a pre-joined table)
+
+A STRUCT can have:
+- One or many fields in it
+- The same or different data types for each field
+- It's own alias

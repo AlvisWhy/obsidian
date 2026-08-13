@@ -259,3 +259,101 @@ SELECT CustomerName
 FROM Customers
 WHERE CustomerName REGEXP '(.)\\1';
 ```
+
+# Set Compare
+1. `EXISTS` / `NOT EXISTS` Compare two sets using `EXISTS` to test presence.
+    
+2. `JOIN`s with `NULL` check Use `LEFT JOIN` or `FULL OUTER JOIN` to find mismatches.
+    
+3. `EXCEPT` / `INTERSECT` (if supported) Use set operators for clean, intuitive comparison between queries.
+
+```SQL
+SELECT DISTINCT p.ProductID, p.ProductName, p.Stock
+FROM Products p
+JOIN Order_Details od ON p.ProductID = od.ProductID
+WHERE p.Stock < 70;
+
+```
+
+EX: 对 Products 中的每一个产品 `p1`，找出它所在 Category 的平均价格，然后判断这个产品价格是否高于这个平均价格。
+```SQl
+SELECT p1.ProductID, p1.ProductName
+FROM Products p1
+WHERE p1.Price > (
+SELECT AVG(p2.Price)
+FROM Products p2
+WHERE p2.CategoryID = p1.CategoryID AND p2.ProductID <> p1.ProductID
+);
+
+SELECT ProductID, ProductName
+FROM (
+    SELECT
+        ProductID,
+        ProductName,
+        Price,
+        AVG(Price) OVER (
+            PARTITION BY CategoryID
+        ) AS category_avg_price
+    FROM Products
+)
+WHERE Price > category_avg_price;
+```
+
+# Join Variants
+
+**1. Self join:** Used to relate a table to itself. This is helpful when rows are connected by a parent-child, referral, or comparison relationship.
+
+**2. Anti join:** Used to find records in one table _not_ matched by another. Typically implemented using `LEFT JOIN ... WHERE other_table.column IS NULL` or `NOT EXISTS`.
+
+**3. Non-Equi Join:** Used when the join condition involves inequality (`<`, `>`, `<=`, `>=`) instead of `=`. Often applied in range-based joins.
+
+!  !  Using SUM to excludeß
+```SQL
+SELECT s.SupplierName
+FROM Suppliers s
+JOIN Product_Suppliers ps ON ps.SupplierID = s.SupplierID
+JOIN Products p ON p.ProductID = ps.ProductID 
+JOIN Categories c ON c.CategoryID = p.CategoryID
+GROUP BY s.SupplierName
+HAVING SUM(CASE WHEN c.CategoryName NOT IN ('Electronics', 'Automotive') THEN 1 ELSE 0 END) = 0
+```
+
+# Nested Query
+
+```SQL
+1
+SELECT ...
+FROM   ...
+WHERE  column = (SELECT MAX(column) FROM table);
+
+2
+SELECT ...
+FROM   ...
+WHERE  column IN (SELECT column FROM table WHERE condition);
+
+
+```
+
+# Rank and Row
+
+```SQL
+SELECT ...,
+       RANK() OVER (PARTITION BY group_column ORDER BY sort_column DESC) AS rank_value,
+       ROW_NUMBER() OVER (PARTITION BY group_column ORDER BY sort_column DESC) AS row_num,
+       DENSE_RANK() OVER (PARTITION BY group_column ORDER BY sort_column DESC) AS dense_rank_value
+FROM   table_name
+```
+```SQL
+SELECT *
+FROM   (
+       SELECT CustomerName,
+              LoyaltyPoints,
+              DENSE_RANK() OVER (ORDER BY LoyaltyPoints DESC) AS loyalty_rank
+        FROM  Customers
+        WHERE CustomerTier = 'VIP'
+        ) ranked_vips
+WHERE loyalty_rank <= 3;
+```
+
+
+# Lead-Lag Navigation

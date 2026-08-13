@@ -177,3 +177,26 @@ min    hour    day of month   month of year   day of week
 
 ```
 
+
+```python
+@dag(
+	dag_id = "xcom_auto"
+	start_date=pendulum.datetime(year=2026,month=1,day=1, tz="UTC")
+	schedule="0 0 * * *",
+	catch_up=False
+	is_paused_upon_creation=False. #Specifies if the dag is paused when created for the first time.
+)
+```
+
+3 Delta Triggers
+Interval based trigger for every several days
+```python
+from airflow.timetables.trigger import DeltaTriggerTimetable
+@dag(
+	schedule =DeltaTriggerTimetable(delta=pendulum.duration(days=10)),
+	start_date=pendulum.datetime(year=2026,month=1,day=1, tz="UTC")
+)
+```
+
+Special Events
+

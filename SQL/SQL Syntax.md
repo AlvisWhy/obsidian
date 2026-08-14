@@ -357,3 +357,36 @@ WHERE loyalty_rank <= 3;
 
 
 # Lead-Lag Navigation
+
+```SQL
+SELECT column1,
+       column2,
+       LAG(column_to_compare) OVER (PARTITION BY group_column ORDER BY order_column) AS PreviousValue,
+       LEAD(column_to_compare) OVER (PARTITION BY group_column ORDER BY order_column) AS NextValue
+FROM   table_name;
+```
+
+```SQL
+SELECT   CustomerID,
+         OrderID,
+         OrderDate,
+         TotalAmount,
+         LAG(TotalAmount) OVER (PARTITION BY CustomerID ORDER BY OrderDate) AS PreviousAmount,
+         TotalAmount - LAG(TotalAmount) OVER (PARTITION BY CustomerID ORDER BY OrderDate) AS ChangeFromPrevious
+FROM     Orders
+ORDER BY CustomerID, OrderDate;
+```
+
+#### `LAG()` 还可以指定“没有值时返回什么”
+
+```SQL
+LAG(column, offset, default)
+
+LAG(TotalAmount, 1, 0)
+OVER (
+    PARTITION BY CustomerID
+    ORDER BY OrderDate
+)
+```
+
+# Recursive Tree

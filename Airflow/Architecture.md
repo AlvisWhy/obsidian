@@ -200,3 +200,27 @@ from airflow.timetables.trigger import DeltaTriggerTimetable
 
 Special Events
 
+```python
+from airflow.timetables.events import eventTimeTable
+
+evnet_list = EventListTable(
+	events=[
+		pendulum.datetime(year=2026,month=1,day=1, tz="UTC"),
+	]
+)
+
+@dag(
+	schedule = evnet_list 
+)
+```
+
+Interval Based
+
+Will trigger the dag on the end date of the previous dag. 一次 DAG Run 对应一个时间区间，而不是仅仅对应一个“触发时间”。
+Incremental Loading
+
+Could get 
+```
+{{ data_interval_start }} {{ data_interval_end }} {{ logical_date }}
+```
+For interval based scheduling with kwargs

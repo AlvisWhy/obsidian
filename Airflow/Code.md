@@ -70,3 +70,14 @@ Connections
 ────────────────────
 {{ conn.xxx.host }}
 {{ conn.xxx.login }}
+
+For Jinja
+Airflow 不会扫描所有python字符，只有operator声明为可模板化的才会渲染
+exp:
+bashoperator:
+	base cmd
+	 env
+python operator:
+	templates_dict
+	 op_args
+	 kwargs

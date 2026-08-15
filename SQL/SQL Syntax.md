@@ -390,3 +390,60 @@ OVER (
 ```
 
 # Recursive Tree
+
+```SQL
+WITH RECURSIVE tree AS ( anchor UNION ALL recursive )
+
+WITH RECURSIVE ReferralTree AS (
+    SELECT CustomerID,CustomerName,	ReferralID, 0 AS Lev
+    FROM Customers
+    WHERE CustomerID = 2
+    
+    UNION ALL
+    
+    SELECT  c.CustomerID, c.CustomerName, c.ReferralID, r.Lev + 1
+    FROM Customers c
+    JOIN ReferralTree r ON r.CustomerID=c.ReferralID
+)
+SELECT * FROM ReferralTree
+```
+
+# Gaps and Islands
+
+To detect missing values in a sequence (gaps) or group continuous events (islands) in a time-ordered or ID-ordered dataset.
+
+```SQL
+WITH DateAll AS (
+    SELECT
+        CustomerID,
+        OrderDate,
+        LAG(OrderDate) OVER (
+            PARTITION BY CustomerID
+            ORDER BY OrderDate
+        ) AS LastD
+    FROM Orders
+),
+
+DateGP AS (
+    SELECT
+        CustomerID,
+        OrderDate,
+        SUM(
+            CASE
+                WHEN LastD IS NULL THEN 1
+                WHEN DATEDIFF(OrderDate, LastD) > 1 THEN 1
+                ELSE 0
+            END
+        ) OVER (
+            PARTITION BY CustomerID
+            ORDER BY OrderDate
+        ) AS GroupID
+    FROM DateAll
+)
+
+SELECT
+    CustomerID,
+    COUNT(DISTINCT GroupID) AS IslandCount
+FROM DateGP
+GROUP BY CustomerID
+```

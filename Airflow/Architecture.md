@@ -198,7 +198,42 @@ from airflow.timetables.trigger import DeltaTriggerTimetable
 )
 ```
 
-Special Events
+For Interval Based
+
+```python
+from airflow.sdk import dag, task
+from airflow.timetables.interval import CronIntervalTimetable
+
+@dag(
+	schedule=CronIntervalTimetable("0 0 * * *"),
+	start_date="2026-01-01",
+	catchup=False
+)
+def increment_loading():
+	@task.python
+	def extract_data(**kwargs):
+	from_date = kwargs["data_interval_start"]
+```
+Will trigger the dag on the end date of the previous dag. 一次 DAG Run 对应一个时间区间，而不是仅仅对应一个“触发时间”。
+Incremental Loading
+
+DeltaTriggerTimetable，CronIntervalTimetable
+Could get 
+```
+{{ data_interval_start }} {{ data_interval_end }} {{ logical_date }}
+```
+For interval based scheduling with kwargs
+
+||`CronIntervalTimetable`|`DeltaTriggerTimetable`|
+|---|---|---|
+|基础|Cron|`timedelta`|
+|时间边界|**固定日历时间**|**相对时间间隔**|
+|例子|每天 00:00|每隔 1 小时|
+|`data_interval_start`|✅|✅|
+|`data_interval_end`|✅|✅|
+|关注点|“日历上的哪个时间点？”|“距离触发时间多久？”|
+
+4 Special Events
 
 ```python
 from airflow.timetables.events import eventTimeTable
@@ -214,13 +249,8 @@ evnet_list = EventListTable(
 )
 ```
 
-Interval Based
 
-Will trigger the dag on the end date of the previous dag. 一次 DAG Run 对应一个时间区间，而不是仅仅对应一个“触发时间”。
-Incremental Loading
+### Parallel and Conditions
 
-Could get 
-```
-{{ data_interval_start }} {{ data_interval_end }} {{ logical_date }}
-```
-For interval based scheduling with kwargs
+
+ 

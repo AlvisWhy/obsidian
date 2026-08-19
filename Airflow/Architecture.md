@@ -252,5 +252,129 @@ evnet_list = EventListTable(
 
 ### Parallel and Conditions
 
+Conditional Tasks
+```python
+@dag
+def parallel_dag(ti):
 
- 
+	@task.branch
+	def load_data_branch():
+			api_data = ti.xcom_pull(task_id = "fetch_api", key = "return_value")
+			if(len(api_data)>10):
+				return 's3_load'
+			else:
+				return 'glue_load'
+	@task.python:
+	def s3_load():
+	...
+	
+	@task.python:
+	def glue_load():
+	...
+	load_data_branch() >> [s3_load(), glue_load()]
+```
+
+Task Groups
+```python
+@task.group
+def fetch_data_group():
+```
+
+Status Dependency
+
+```python
+@task.python(
+	trigger_rule = "all_success"/"all_done"/
+)
+```
+
+|Trigger Rule|含义|
+|---|---|
+|`all_success`|**所有 upstream 都成功**|
+|`all_failed`|所有 upstream 都失败|
+|`all_done`|所有 upstream 都执行完，不管成功失败|
+|`one_success`|至少一个 upstream 成功|
+|`one_failed`|至少一个 upstream 失败|
+|`none_failed`|没有 upstream 失败，`success` / `skipped` 都可以|
+|`none_failed_min_one_success`|没有失败，并且至少一个成功|
+|`none_skipped`|没有 upstream 是 `skipped`|
+|`always`|不管 upstream 什么状态，都运行|
+
+Parent DAGs Orchestration
+
+```python
+from airflow import DAG
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+
+with DAG(
+    dag_id="parent_dag",
+    schedule="@daily",
+) as dag:
+
+    trigger_child = TriggerDagRunOperator(
+        task_id="trigger_child_dag",
+        trigger_dag_id="child_dag",
+        wait_for_completion=True,
+        conf={
+            "source": "parent_dag"
+        },
+    )
+```
+
+Connections in Airflow
+Define the connection to the object want to use
+
+Hooks
+
+Asset
+Data Aware Dag
+Dag depend on the dataset instead of other dags
+create materialized data and trigger other dags
+
+DAG A：生产数据
+```python
+from airflow import DAG
+from airflow.decorators import task
+from airflow.datasets import Dataset
+from datetime import datetime
+
+orders_dataset = Dataset("s3://my-bucket/orders/")
+
+with DAG(
+    dag_id="producer_dag",
+    start_date=datetime(2026, 1, 1),
+    schedule="@daily",
+    catchup=False,
+) as dag:
+
+    @task(outlets=[orders_dataset])
+    def create_orders():
+        # 这里生成订单数据
+        print("Create orders data")
+
+    create_orders()
+```
+
+DAG B：依赖 Dataset
+```python
+from airflow import DAG
+from airflow.decorators import task
+from airflow.datasets import Dataset
+from datetime import datetime
+
+orders_dataset = Dataset("s3://my-bucket/orders/")
+
+with DAG(
+    dag_id="consumer_dag",
+    start_date=datetime(2026, 1, 1),
+    schedule=[orders_dataset],
+    catchup=False,
+) as dag:
+
+    @task
+    def analyze_orders():
+        print("Analyze latest orders")
+
+    analyze_orders()
+```
+**Airflow 本身不会因为你直接在 BigQuery / GCS 里修改了数据，就自动知道 Dataset 更新了。** 通常需要由 Airflow task 在成功完成相关数据生产后用outlet声明/产生 Dataset event。**`outlets` 最好只放那些 task 确实负责更新的 Dataset**，否则就可能出现“假更新”，导致下游 DAG 被错误触发。

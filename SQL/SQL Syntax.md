@@ -447,3 +447,22 @@ SELECT
 FROM DateGP
 GROUP BY CustomerID
 ```
+
+# Pivot Flip
+
+There are two key variants:
+
+1. **Pivot (Rows to columns):** Aggregating data and displaying each category as a column.
+
+```SQL
+SELECT * FROM Sales PIVOT 
+( SUM(Amount) FOR Product IN ('Apple', 'Orange') );
+
+SELECT ProductName,
+        SUM(CASE WHEN MONTH(LastRestockDate) = 1 THEN MonthlySales END) AS Jan,
+        SUM(CASE WHEN MONTH(LastRestockDate) = 2 THEN MonthlySales END) AS Feb,
+        SUM(CASE WHEN MONTH(LastRestockDate) = 3 THEN MonthlySales END) AS Mar
+FROM Products
+GROUP BY ProductName
+```
+1. **Unpivot (Columns to rows):** Converting wide tables into long format by flattening column-based values into rows.

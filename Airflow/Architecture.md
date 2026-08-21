@@ -43,6 +43,22 @@ Q2 Executor：
 负责：
 **真正把任务发送给 Worker。**
 
+Scheduler
+    │
+    │ submit task
+    ▼
+CeleryExecutor
+    │
+    │ send task
+    ▼
+Celery Broker / Queue
+    │
+    ▼
+Celery Worker
+    │
+    ▼
+执行 task
+
 ### Triggerer
 负责管理大量"等待事件发生"的异步任务（Deferrable Tasks），避免 Worker 一直被占用。
 
@@ -378,3 +394,31 @@ with DAG(
     analyze_orders()
 ```
 **Airflow 本身不会因为你直接在 BigQuery / GCS 里修改了数据，就自动知道 Dataset 更新了。** 通常需要由 Airflow task 在成功完成相关数据生产后用outlet声明/产生 Dataset event。**`outlets` 最好只放那些 task 确实负责更新的 Dataset**，否则就可能出现“假更新”，导致下游 DAG 被错误触发。
+
+#### Airflow Flower
+
+Flower 是 Celery 的 Web Monitoring Tool，用于监控 Celery Worker、Task 和 Queue 状态。在 Airflow 使用 CeleryExecutor 时，经常配合使用。
+
+Celery 是一个分布式任务队列/执行框架；Airflow 可以通过 CeleryExecutor 使用 Celery Worker 来分布式执行 Task。
+
+负责监控
+Celery Queue
+Celery Worker
+Broker
+Task Distribution
+worker-1 正在执行什么
+worker-2 是否在线
+Redis 还有多少待执行任务
+
+Set worker for a defined queue:
+
+```Dockerfile
+airflow-worker:
+<<: *airflow-common -q compute_heavy_queue
+command: celery worker
+......
+```
+
+```python
+@task(queue = "compute_heavy_queue")
+```

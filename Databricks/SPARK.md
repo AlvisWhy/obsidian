@@ -266,7 +266,19 @@ Dynamic Partition Pruning
 3. **把这个值集合下推到大表扫描**
 4. **如果大表按这个 Join Key 分区，就可以直接跳过大量 Partition**
 
-Predicate Pushdown: First filter operation and dynamically optimize the sequence
+#### Predicate Pushdown: 
+
+First filter operation and dynamically optimize the sequence
+→ 把 WHERE 条件推到数据源，存储层直接过滤
+包括 patition pruning/ parquet orc filter/ row filter
+简单列 常量比较可以下推（包括前缀匹配），计算跨表转化函数不能
+不能pushdown
+```SQL
+WHERE a.price * b.rate > 100 
+WHERE UPPER(name) = 'ALICE' 
+WHERE CAST(id AS STRING) = '123'
+LIKE '%keyword%'
+```
 So could only read the relevant files.
 Get the filter from the unpartitioned dataframe, with broadcast exchange,
 the join key of the broadcasted table should be the partitioned column of the table
@@ -432,9 +444,12 @@ Big Executor
 GC frequency will be less, but pause will be high
 
 Bucketing
+
+按照 JOIN KEY 的 hash，把数据提前分成固定数量的桶，这样 JOIN 时可以让相同 key 的数据直接去对应的桶里匹配，减少 shuffle。
+
 Number of buckets = Total Size of data/128MB
-choose column with high-cardinality for bucketing, eliminating shuffling of partitions
-No shuffling need while grouping by, the whole bucket will go to eache executor.
+choose column with high-cardinality for bucketing, Bucketing can reduce or eliminate shuffle for GROUP BY/JOIN when the query's grouping/join key matches the bucketed column and Spark can exploit the existing distribution.
+
 ```
 df.write.format("parquet")\
 		.mode("append")\
@@ -445,6 +460,11 @@ use ZORDER and cluster now
 
 ```
 ---------------------------------------------------------------
+Bucketing = “提前把相同 JOIN/GROUP BY key 的数据分到固定桶里” → 减少 shuffle 
+
+Z-ORDER = “让经常一起被查询的数据物理上更接近” → 提高 data skipping 
+
+Liquid Clustering = “更现代、更灵活的数据布局管理” → 替代很多手动 bucketing/Z-ORDER 场景
 
 Structured Streaming
 Most narrow transformations are stateless, do not need the previous stream.

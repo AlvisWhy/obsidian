@@ -298,6 +298,8 @@ echo $?
 | 字符串 | `<`   | 字典序更小        |
 | 字符串 | `>`   | 字典序更大        |
 用数字> <也会转化为字符比较
+
+变量展开时，如果变量内容可能包含空格，通常使用 `"$variable"`。
 if
 ```shell
 for f in $(ls *txt)
@@ -432,6 +434,9 @@ for () , it is starting a subshell. For {} No subshell started and need a ; to s
 
 Another useful feature of subshells is that if you change folder, then that folder change only applies within the subshell. When you return, you go back to where you were.
 
+1 {} 为了防止变量名粘连
+2`${...}` 是 Bash 的**参数展开（parameter expansion）语法**。
+
 ```shell
 //var未定义或为空时使用default
 ${var:-default}
@@ -549,3 +554,200 @@ world
 |`\r`|carriage return|
 |`\!`|当前 history number|
 |`\$`|普通用户 `$`，root `#`|
+
+hereDOC
+不加引号 里面会进行 expansion。
+```shell
+<< END
+$var
+$(command)
+`command`
+END
+```
+加引号
+```shell
+<< 'END'
+$var
+$(command)
+`command`
+END
+```
+里面不会进行 expansion。
+<<- 'END' 可以去掉内部每一行的 Tab 
+
+Bash history
+```bash
+!! //重复上一条命令
+!$ //上一条命令最后一个参数
+！* //上一条命令所有参数
+! -n //执行前n条命令
+!string //执行做后一条以string开头的命令
+!?About? //找最近一条**包含 `About`** 的历史命令。
+```
+
+Return all absolute paths
+```shell
+function sharefiles() {
+    for file in $(ls "$@"); do
+        echo -n $(pwd)
+        [[ $(pwd) != "/" ]] && echo -n /
+        echo $file
+    done
+}
+sharefiles
+```
+
+JOB Control
+```
+jobs
+```
+查看 jobs。
+
+```
+fg %1
+```
+Job 1 → 前台。
+
+```
+bg %1
+```
+Job 1 → 后台继续运行。
+
+```
+wait %1
+```
+等待 Job 1 完成。
+
+```
+Ctrl+C
+```
+发送 `SIGINT`，通常终止前台程序。
+
+```
+Ctrl+Z
+```
+发送 `SIGTSTP`，暂停前台程序。
+
+Job Control
+│
+├── Jobs
+│   └── shell 管理的进程/进程组
+│
+├── Job Specification
+│   ├── %1       → job 1
+│   ├── %2       → job 2
+│   ├── %+       → current job
+│   └── %-       → previous job
+│
+├── Signals
+│   ├── Ctrl+C → SIGINT  → interrupt
+│   ├── Ctrl+Z → SIGTSTP → stop
+│   └── SIGCONT          → continue
+│
+├── fg
+│   └── background/stopped → foreground
+│
+├── bg
+│   └── stopped → background + continue
+│
+└── wait
+    └── shell 等待 background job 完成
+
+#### Trap EXIT
+
+当 shell 即将退出时执行 `xxx`。
+```shell
+trap 'xxx' 
+```
+
+例如脚本创建临时文件：
+```
+#!/bin/bash
+
+tmpfile=/tmp/test.txt
+
+touch "$tmpfile"
+
+trap 'rm -f "$tmpfile"' EXIT
+
+# 做一些事情
+...
+```
+最后无论脚本怎么正常退出，都把临时文件删除。
+
+Debug
+bash -n xxxx.sh
+
+|Option|名称|作用|
+|---|---|---|
+|`-n`|noexec|不执行，只检查语法|
+|`-v`|verbose|打印读取到的脚本|
+|`-x`|xtrace|打印实际执行的命令|
+#### String Manipulation
+```shell
+
+A='12345678901234567890'
+echo "${#A}"               # How long is 'A'?
+
+echo ${A:2}  #从2index处取全部
+echo ${A:2:3}  #从2index处取三个
+
+# The first part enclosed in `/` signs represents what’s searched for, and the second what is replaced:
+
+echo "${A/234/432}"。#只换出现的第一个
+echo "${A//234/432}"。#换全部
+
+C=AbCd
+echo ${C,}   #第一个换小写
+echo ${C,,}    #全换小写
+echo ${C^}
+echo ${C^^}    #大写
+
+  
+```
+
+sed → 修改/替换文本 
+awk → 按列处理、过滤、统计 特别适合处理 CSV / columns
+perl → 更强大的文本处理/正则/脚本
+
+```shell
+sed 's/hello/hi' file.txt #每行第一个换
+sed 's/hello/hi/g' file   #全部换
+sed -i 's/hello/hi/g' file.txt  #原位替换
+
+sed '2d' file.txt  #删除第 2 行
+sed '2d，5' file.txt #删除第 2-5 行
+sed '/error/d' file.txt  #删除包含 `error` 的行
+
+sed -n '2p' file.txt     
+#-n → 不默认打印 ，2p → print 第 2 行
+```
+awk
+$1 → 第一列 $2 → 第二列 $3 → 第三列
+```shell
+awk '{print $1}' file.txt
+awk '{print $0}' file.txt   #整行。
+
+awk -F',' '{print $2}' file.csv   #Field separator = `,`
+
+#`awk` + 条件 awk '条件 {动作}' 文件
+awk '$3 > 30 {print $2}' file.txt
+awk '{sum += $2} END {print sum}' file.txt
+
+awk '{print NR, $0}' file.txt #`NR`：当前第几行
+awk '{print NF}' file.txt #`NF`：这一行有多少列
+```
+Perl
+```shell
+# Perl 替换
+perl -pe 's/hello/hi/g' file.txt
+# -p 读取每一行 → 执行代码 → 打印这一行  
+perl -pi -e 's/foo/bar/g' file.txt #原位修改
+
+perl -ne '代码' file
+#- `-n` = 逐行读取，但不自动打印 - `-e` = **直接执行后面的 Perl 不用写 `.pl` 脚本文件）
+-n = no automatic print 
+-p = print each line 
+-e = execute code
+
+```

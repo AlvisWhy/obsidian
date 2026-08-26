@@ -5,6 +5,9 @@ Do not move file locations for the files registered in UC.
 %pip
 %run 
 run code from other notebooks, directly use values and functions in current notebook
+%run ./file_name
+after running this. 
+
 
 Utilities
 ```

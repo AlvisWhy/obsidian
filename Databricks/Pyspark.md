@@ -105,7 +105,13 @@ df_csv_custom = spark.read.format("csv")\
 		.load()
 
 ```
+Read From location instead of UC(Not for managed table)
+```python
+location = spark.sql('DESCRIBE DETAIL events').select('location').collect()[0][0]
 
+df = spark.read.format('delta').load(location)
+
+```
 SELECT Alias
 ```
 df_select = df.select('id', 'customer_id')
@@ -345,7 +351,7 @@ ACID, Optimization/Indexing, Commit &Rollback, Structured Query Env
 delta_log contains the commit history
 
 Upsert/ Merge
-```
+```python
 # UPSERT with DLETA LIBRARY
 from delta.tables import DeltaTable
 
@@ -366,6 +372,23 @@ df_new.alias("src").mergeInto("table_name", col("src.id") = col("table_name.id")
 		.whenMatched().updateAll()\
 		.whenNotMatched().insertAll()\
 		.merge()
+```
+```SQL
+MERGE INTO customer AS target
+USING updates AS source
+ON t.cusomterID = u.customerID
+
+WHEN MATCHED THEN
+UPDATE SET
+t.name = u.name
+t.xxxx = u.xxxx
+
+WHEN NOT MATCHED [BY TARGET] THEN
+INSERT(name, xxxx)
+VALUES("", "")
+
+WHEN NOT MATCHED BY SOURCE THEN
+DELETE
 ```
 If value is a Dict, could read data by 
 
@@ -455,5 +478,13 @@ VERSION AS OF 1;
 SELECT * FROM demo.delta_lake.xxx
 TIMESTAMP AS OF '2025-01-19T..';
 
-RESTORE TABLE demo.delta_lake.xxx VERSION AS OF 1;
+RESTORE TABLE demo.delta_lake.xxx TO VERSION AS OF 1;
+
+MERGE INTO employee t
+USING (
+	SELECT employee_id, salary
+	FROM employees s
+	VERSION AS OF 9
+) ON t.employee_id = s.employee_id
+WHEN MATCH THEN UPDATE SET t.salary = s.salary
 ```

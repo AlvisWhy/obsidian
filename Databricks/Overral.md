@@ -368,6 +368,18 @@ For frequent merge operation, the files are smaller than 128MB
 
 -**Deletion Vector**：逻辑删除，记录哪些行不可见。For fast delete or update. 
  **OPTIMIZE**：Will operate on the tables can do exact operation
+
+Vaccum
+```SQL
+VACUUM my_table RETAIN 720 HOURS
+
+"""or set for table"""
+
+ALERT TABLE t SET TABLEPROPERITIES (
+	delta.deleteFileRetentionDuration = 'interval N days'
+)
+
+```
 # Transaction log location files
 
 stored in the 

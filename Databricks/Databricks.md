@@ -178,6 +178,72 @@ query.awaitTermination()
 SchemaEvoluationMode
 addNewColumn/ rescue(new data in a single column)/ failOnNewColumns (stream fail)/ None(ignore)
 
+```sql
+""" applied all merge operation in this session """
+SET spark.databricks.delta.schema.automerge.enable = true
+```
+or
+```python
+.option("merge_schema", true)
+
+```
+Rename Column
+```SQL
+ALTER TABLE products RENAME price_new To price
+```
+Generated column
+```SQL
+CREATE OR REPLACE TABLE product(
+	product_id INT
+	price DOUBLE
+	price_taxed DOUBLE GENERATED ALWAYS AS (ROUND(price*1.2, 2))
+)
+
+```
+**Schema enforcement** is your default safety net. It rejects writes with extra columns or type mismatches — before any damage reaches the table.
+
+To add new columns during a write — use **`mergeSchema`**. Per-write, intentional, production-safe.  
+Existing rows get **NULL** in the new column.  
+`mergeSchema` cannot rename — only add. For true renames, use **`ALTER TABLE RENAME COLUMN`**.
+
+**`ALTER TABLE`** operations are metadata-only. ADD, RENAME, and DROP columns update the schema in the transaction log without rewriting any Parquet files. **Instant on any table size.**  
+DROP removes the column from queries immediately but does not erase the physical data — **OPTIMIZE and VACUUM** complete the erasure.
+
+**Generated columns** are computed at write time and stored physically. Define them with `GENERATED ALWAYS AS (expression)`.  
+Delta populates them automatically on every **INSERT or UPDATE**. Remember, they are physically stored.
+
+Type widening
+Only work in the type family
+Byte -> Short -> Int -> Long
+Float -> Double
+can broaden the type of the data
+```python
+ALTER TABLE sensor_reading
+SET TABLEPROPERTIES ('delta.enableTypeWidening' = true)
+```
+
+VARIANT Data Type (store json type data), is a binary type
+
+||STRUCT|VARIANT|
+|---|---|---|
+|Schema|**固定**|**灵活**|
+|数据类型|明确定义|可以是不同类型|
+|类似|Object / Struct|JSON|
+|字段是否提前定义|是|不一定|
+|适合|已知、稳定的数据结构|半结构化 / schema 不稳定的数据|
+
+```SQL
+INSERT INTO iot_event VALUES
+(1, PARSE_JSON('{"sensor_id":"5001","temp": 24.2}'))
+```
+query with :operator and ::cast
+```SQL
+SELECT 
+payload:sensor_id::STRING AS sensor_id
+payload:temp::DOUBLE AS temp
+FROM iot_event
+
+```
 ### foreachBatch
 
 如果想：

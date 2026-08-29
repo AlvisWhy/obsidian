@@ -488,3 +488,15 @@ USING (
 ) ON t.employee_id = s.employee_id
 WHEN MATCH THEN UPDATE SET t.salary = s.salary
 ```
+
+Idempotency
+让 Delta Lake 能识别 retry 造成的重复写入，从而实现幂等性（idempotency）
+ex: txnAppId = "daily_etl" txnVersion = 20260827
+```python
+df.write \ 
+.format("delta") \ 
+.option("txnAppId", "my_app") \ 
+.option("txnVersion", "1") \ 
+.mode("append") \ 
+.save(path)
+```

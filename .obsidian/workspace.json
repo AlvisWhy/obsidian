@@ -86,8 +86,7 @@
               "title": "Source Control"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "horizontal",
@@ -197,22 +196,24 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "a146e339fb578698",
+  "active": "9a22501d459d4cc8",
   "lastOpenFiles": [
-    "Databricks/Project setup.md",
-    "Databricks/Databricks.md",
+    "Databricks/configuration.md",
     "Databricks/SPARK.md",
     "Databricks/Pyspark.md",
-    "Databricks/UC.md",
-    "Databricks/configuration.md",
-    "Databricks/SparkSQL.md",
+    "Databricks/Project setup.md",
+    "Databricks/Databricks.md",
+    "Databricks/Architecture.md",
     "Databricks/command.md",
-    "Databricks/compute.md",
-    "Databricks/未命名.md",
     "Shell/shell.md",
+    "SQL/SQL Syntax.md",
+    "kubernetes.md",
+    "Pasted image 20260830141718.png",
+    "Databricks/compute.md",
+    "Databricks/SparkSQL.md",
+    "Databricks/未命名.md",
     "GCP/Data.md",
     "Airflow/Architecture.md",
-    "SQL/SQL Syntax.md",
     "Airflow/Code.md",
     "GCP/Data Goverance.md",
     "GCP/Knowledge Catalog.md",
@@ -226,7 +227,6 @@
     "GCP/Storage.md",
     "AZure/Compute.md",
     "GCP/kubernetes.md",
-    "GCP/Network.md",
     "Hadoop",
     "未命名.canvas",
     "Jenkins",

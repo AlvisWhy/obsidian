@@ -1,3 +1,4 @@
+
 Databricks | | (Managed Identity) -> Access Connector | | (RBAC permission) -> Azure Data Lake Storage Gen2
 
 AZ

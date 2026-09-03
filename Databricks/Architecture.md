@@ -48,3 +48,27 @@ To update DB CDC or data to UC
 Connection  -> Gateway(keep loading data change) -> Staging(Store data change into a bucket) -> Ingestion pipeline -> Destination table
 
 Query Based Connector: Keep query to get what changed since the last ingestion
+
+#### Files and UC path
+
+Databricks
+│
+├── Workspace
+│    └── /Workspace/...
+│         → Notebook / Code
+│
+├── DBFS
+│    └── dbfs:/...
+│         → 传统文件存储/访问
+│
+└── Unity Catalog
+     │
+     ├── Catalog
+     │    └── Schema
+     │         ├── Table
+     │         └── Volume
+     │              └── /Volumes/catalog/schema/volume/
+     │
+     └── Governance / Permissions、
+     
+/Volumes/<catalog>/<schema>/<volume>/<file> ↑ ↑ ↑ Catalog Schema Volume

@@ -6,6 +6,35 @@ SDC change data
 2 community ingestion, not SLA
 3 Autoloader, write your own logics
 
+用另一个路径记录schema的变化
+
+可以显式选择：
+```
+df = df.select(
+    "*",
+    "_metadata"
+)
+```
+`_metadata` 是一个 **STRUCT**。
+里面可以有：
+```
+_metadata
+├── file_path
+├── file_name
+├── file_size
+├── file_modification_time
+└── ...
+```
+```
+order_raw = spark.readStream.format("cloudFiles")
+			.option("cloudFiles.format", "csv")
+			.option( "cloudFiles.schemaLocation","/Volumes/main/raw/metadata/schema/" ) 
+			.option( "checkpointLocation","/Volumes/main/raw/metadata/checkpoint/" )
+			
+
+order_raw = order_raw
+			.withColumn("ingest_timestamp", col("_metadata.file_modification_time"))
+```
 # **STREAM READING WRITING**
 
 AutoLoader,
@@ -100,7 +129,15 @@ airline
 
 Auto Loader：
 
-可以自动：
+Auto Loader 常见的 `schemaEvolutionMode` 有：
+
+| Mode               | 新 column 出现时 | 结果                    |
+| ------------------ | ------------ | --------------------- |
+| `addNewColumns`    | ✅ 添加新 column | Schema 自动扩展           |
+| `rescue`           | 不修改原 schema  | 新字段放进 `_rescued_data` |
+| `failOnNewColumns` | ❌ 直接失败       | Streaming query 停止    |
+| `none`             | ❌ 不处理        | 新字段通常被忽略              |
+
 
 ```
 .option(
@@ -153,6 +190,12 @@ Spark 需要一直记住：
 
 Spark 才会把对应 State 删除。
 
+#### Bad Data
+类型不匹配会放入rescue column
+
+**坏的 record / malformed input → bad records**  
+**能解析，但字段无法匹配 schema → `_rescued_data`**
+
 ```
 query = (spark.readStream
 .format("cloudFiles")
@@ -171,6 +214,8 @@ query = (spark.readStream
 // Auto evolve for updated shceme
 .option("mergeSchema", True)
 .partitionBy("topic", "year_month")
+// support schema evolving
+.option("mergeSchema", "true")
 // Set trigger interval
 .trigger(availableNow=True)/.trigger(processingTime="30 seconds")
 .table("bronze"))
@@ -179,9 +224,6 @@ query = (spark.readStream
 query.awaitTermination()
 
 ```
-
-SchemaEvoluationMode
-addNewColumn/ rescue(new data in a single column)/ failOnNewColumns (stream fail)/ None(ignore)
 
 ```sql
 """ applied all merge operation in this session """
@@ -569,3 +611,10 @@ def orders_quarantine():
 	orders_df = process_orders()
 	return orders_df
 ```
+
+SDP (new version for DLT)
+
+FLow types:
+1 Append AutoLoader/Kafka/Streaming table -> Streaming Table/sink
+2 Auto CDC Streaming table -> Streaming Table/sink
+3 MV Flow Delta

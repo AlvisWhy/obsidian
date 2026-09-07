@@ -618,3 +618,59 @@ FLow types:
 1 Append AutoLoader/Kafka/Streaming table -> Streaming Table/sink
 2 Auto CDC Streaming table -> Streaming Table/sink
 3 MV Flow Delta
+
+Managed Table -> materialized view(usually for gold layer)
+Kafka event-hub external delta -> sink dp.createsink() +dp.append_flow
+
+Streaming table :
+	new row arriving incrementally -> @dp.table (implicit append flow)
+	 new rows arriving multiple sources -> @dp.create_streaming_table() + @dp.append_flow()
+	 CDC events -> dp.create_streaming_table() + dp.create_auto_cdc_flow()
+materialized_view -> @dp.materialized_view 
+
+```python
+@dp.table(name = "bronze")
+@dp.expect("op_is_valid", "op IN ('c','u','d')")
+@dp.expect_or_drop("ts_is_not_null", "ts_ms IS NOT NULL")
+def bronze_layer_sdc():
+	return (
+		spark.readStream
+			.format('cloudFiles')
+			.option('cloudFiles.format', 'csv')
+			.option('inferSchema', 'true')
+			.option('header', 'true')
+			.load(PATH)
+			.select("*",
+			col("_metadata.file_modification_time").alias("ingest_time")
+	)
+
+```
+
+```python
+dp.create_streaming_table(
+	name = "silver_oders",
+	expect_all_or_drop {
+		"valid_order_id": "order_id IS NOT NULL",
+		"valid_amounr": "amount > 0"
+	}
+)
+
+dp.create_auto_cdc_flow(
+	target = "silver_orders",
+	source = "bronze"
+	key = ["order_id"]
+	sequence_by = "ts_ms"
+	apply_as_delete = "op = 'd' or __deleted = 'true'"
+	store_as_scd_type = "2"
+	except_column_list = ["_ingest_time", "__deleted", "op", "ts_ms"]
+)
+
+ 
+
+```
+
+Jobs
+
+Tasks: pipeline/ python/ notebook
+
+Trigger: schedule/ file arrival/ delta table change/manual API

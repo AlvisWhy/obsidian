@@ -6,6 +6,26 @@ ELT use bq SLQ to process the data
 
 Datastream
 read transaction log from DB for CDC.
+with no lantency， from all kinds of database to BQ/Cloud Storage
+MySQL / PostgreSQL
+        │
+        │ CDC
+        ▼
+   Datastream
+        │
+        │ change events
+        ▼
+    Dataflow
+        │
+        ├── 处理 INSERT
+        ├── 处理 UPDATE
+        ├── 处理 DELETE
+        ├── 去重 / 排序
+        ├── 数据转换
+        └── SCD Type 1 / 2
+        │
+        ▼
+    BigQuery
 
 Sensitive Data Protection(DLP before)
 De-identify the PII before storing or scanning data in storage
@@ -189,3 +209,12 @@ A STRUCT can have:
 - One or many fields in it
 - The same or different data types for each field
 - It's own alias
+
+materialized view
+
+pubsub
+Pub/Sub Ordering 的代价就是：为了保证顺序，前面的消息处理失败时，同一个 ordering key 后面的消息可能被阻塞
+exact once 影响速度
+
+在topic通过data提取部分加入artifact可以后面subscriber filter， 不能直接filter message。
+

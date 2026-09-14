@@ -35,6 +35,56 @@ order_raw = spark.readStream.format("cloudFiles")
 order_raw = order_raw
 			.withColumn("ingest_timestamp", col("_metadata.file_modification_time"))
 ```
+
+Using autoloader reading nested json
+
+```
+df = (
+    spark.readStream
+        .format("cloudFiles")
+        .option("cloudFiles.format", "json")
+        .load("s3://bucket/raw/")
+)
+```
+
+schema ：
+
+```
+id: long
+
+customer: struct
+    ├── name: string
+    └── address: struct
+          ├── city: string
+          └── zip: string
+
+items: array
+    └── element: struct
+          ├── product: string
+          └── price: long
+```
+
+直接访问：
+
+```
+df.select(
+    "id",
+    "customer.name",
+    "customer.address.city"
+)
+```
+
+处理 array：
+
+```
+from pyspark.sql.functions import explode
+
+df.select(
+    "id",
+    explode("items").alias("item")
+)
+```
+
 # **STREAM READING WRITING**
 
 AutoLoader,

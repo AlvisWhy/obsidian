@@ -106,3 +106,23 @@ postScanActions:
 ```
 
 This define a job and could run it to check data quality.
+
+Apache Iceberg
+
+```
+                  Iceberg
+                     │
+          ┌──────────┴──────────┐
+          ↓                     ↓
+        ACID                 Pruning
+          │                     │
+ Snapshot + Commit       Partition pruning
+          │                     │
+          │                Manifest pruning
+          │                     │
+          │                 File pruning
+          ↓                     ↓
+ 数据一致性/并发安全          少读数据
+```
+
+**ACID 解决的是“数据写得对不对”，pruning 解决的是“查询要不要读这么多数据**

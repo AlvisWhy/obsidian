@@ -10,12 +10,18 @@ mode development must set individual for each user
 
 1 Job parameters
 
+Run backfill: Backfill 是针对历史时间范围重新执行 pipeline，补齐或重算过去的数据。
+job can run to backfill the previous dates
+{{backfill.isodate}}
+
 2 Task parameters
 
 base parameter like job id time should be added in base parameter in job definition yml
 and could be used by 
 dbuitls.widgets.text()
 dbutils.widgets.get("")
+
+In DAB:
 
 ```
 databricks bundle deploy -t prod --var="catalog=citibike_prod"
@@ -38,7 +44,10 @@ variables:
 ${var.var_name}
 ${var.all_purpose_clus}
 ```
-Dynamic value ref
+
+3 Dynamic value ref 
+can be passed to job parameter or task parameters
+
 job.id, job.name, job.run_id
 Use parameter in py script
 ```

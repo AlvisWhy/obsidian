@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "07bde7966e117428",
+        "id": "ddf3c4a23e3a54d3",
         "type": "tabs",
         "children": [
           {
-            "id": "9a22501d459d4cc8",
+            "id": "e61b3bd2f4fc00f2",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "GCP/Dataflow.md",
+                "file": "GCP/Data.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Dataflow"
+              "title": "Data"
             }
           }
         ]
@@ -196,15 +196,21 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "9a22501d459d4cc8",
+  "active": "e61b3bd2f4fc00f2",
   "lastOpenFiles": [
-    "GCP/Data Goverance.md",
     "GCP/Dataflow.md",
-    "GCP/Data.md",
-    "GCP/IAM.md",
-    "GCP/kubernetes.md",
+    "GCP/Streaming Data.md",
     "GCP/Storage.md",
+    "GCP/security.md",
     "GCP/Network.md",
+    "GCP/kubernetes.md",
+    "GCP/IAM.md",
+    "GCP/Data.md",
+    "GCP/Data Goverance.md",
+    "GCP/Cloud logging.md",
+    "GCP/Cloud IDS.md",
+    "GCP/cloud build.md",
+    "GCP/Compute.md",
     "Databricks/Databricks.md",
     "Databricks/Project setup.md",
     "Databricks/configuration.md",
@@ -219,13 +225,7 @@
     "SQL/SQL Syntax.md",
     "kubernetes.md",
     "Pasted image 20260830141718.png",
-    "Databricks/未命名.md",
-    "Airflow/Architecture.md",
-    "GCP/Knowledge Catalog.md",
-    "ES/Search.md",
     "SQL",
-    "ES/API.md",
-    "ES/Structure.md",
     "ES",
     "Hadoop",
     "未命名.canvas",

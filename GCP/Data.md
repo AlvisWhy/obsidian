@@ -95,6 +95,85 @@ Row key: search reference
 Column Family: large category (should not be too many and confined after created)
 Column qualifier: concret classification
 
+选择routing
+1 Single-cluster routing
+
+例如：
+```
+Export Job
+    ↓
+export-profile
+    ↓
+cluster-us
+```
+
+这样你可以把 workload 隔离开。由于读写都在同一个 cluster，可以获得 read-your-writes consistency。
+
+2 Multi-cluster routing
+让 Bigtable 自动选择合适的 cluster。
+
+Write
+ ↓
+cluster-us
+
+马上 Read
+ ↓
+cluster-us
+
+选择priority
+**Bigtable App Profile** 理解成一个“**这类应用访问 Bigtable 时，应该怎么访问、访问哪个 cluster、用什么优先级**”的配置。
+给线上应用profile high
+给道出数据 low
+
+一个实际项目可能这样设计
+
+```
+Bigtable Instance
+│
+├── cluster-us
+└── cluster-eu
+```
+### Game Profile
+
+```
+game-profile
+
+Routing:
+    Multi-cluster
+
+Priority:
+    HIGH
+```
+
+### Export Profile
+
+```
+export-profile
+
+Routing:
+    Single-cluster
+
+Cluster:
+    cluster-us
+
+Priority:
+    LOW
+```
+
+### Backend Profile
+
+```
+backend-profile
+
+Routing:
+    Multi-cluster
+
+Priority:
+    MEDIUM
+```
+
+普通业务请求使用。
+
 ### Embedding database in BQ
 
 文本
@@ -212,9 +291,50 @@ A STRUCT can have:
 
 materialized view
 
-pubsub
-Pub/Sub Ordering 的代价就是：为了保证顺序，前面的消息处理失败时，同一个 ordering key 后面的消息可能被阻塞
-exact once 影响速度
 
-在topic通过data提取部分加入artifact可以后面subscriber filter， 不能直接filter message。
+BQ wirte:
+
+||Storage Write API|Data Transfer Service|
+|---|---|---|
+|本质|**写入 API**|**数据搬运服务**|
+|谁调用|Application / Dataflow 等|Google 托管服务|
+|典型模式|Streaming|Batch / Scheduled|
+|实时性|高|通常较低|
+|是否需要自己写 pipeline|通常需要|很少|
+|典型例子|Dataflow → BigQuery|Google Ads → BigQuery|
+|重点|**怎么写进 BQ**|**怎么把数据搬到 BQ**|
+
+- BigQuery Data transfer Service is a "set it and forget it" way to ingest data from supported third-party sources.
+
+Default / At-least-once
+→ retry 可能 duplicate
+
+Committed Stream + offset
+→ exactly-once
+→ offset 已提交，重复提交会被识别
+
+BQ CDC
+`max_staleness` 给 BigQuery 一个“可以接受多旧”的窗口，让系统通过定期后台应用 CDC changes，减少查询时的 runtime merge。
+
+BQ CDC 主要连 DB->datastream->BQ CDC
+如果没有datastream需要其他cdc手动把db数据处理成cdc格式 然后给bq
+DB ->Debezium / CDC logic -> Kafka / Pub/Sub ->  BigQuery
+
+ Scheduled Query
+
+```
+10:00 → 执行 SQL → 结束
+10:05 → 执行 SQL → 结束
+10:10 → 执行 SQL → 结束
+```
+
+Continuous Query
+10:00 │ ├── SQL 持续运行 ├── 新数据 → 处理 ├── 新数据 → 处理 ├── 新数据 → 处理 
+SQL 持续处理不断进入 BigQuery 的 streaming data，而不是执行一次就结束。
+
+**Reverse ETL**
+Reverse ETL is the process of moving data from a storage system, like BigQuery, back into operational systems. This allows you to activate your data by making it available in the tools your business teams use every day like CRMs, marketing automation platforms, and advertising networks.
+It is based on continuous query, can push query results to pussub bigtable another bq or spanner
+
+Modifying the table's properties with **--require_partition_filter** is BigQuery's native and most direct way to enforce partition filtering. It's a table-level setting that causes any query against that specific table to fail if it doesn't include a predicate on the partitioning column, thereby preventing accidental full table scans and ensuring cost/performance control.
 

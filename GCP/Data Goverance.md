@@ -126,3 +126,17 @@ Apache Iceberg
 ```
 
 **ACID 解决的是“数据写得对不对”，pruning 解决的是“查询要不要读这么多数据**
+
+
+Data quality:
+
+schema on write:
+- Pipelines clean, structure, and validate data before loading it into a data warehouse.
+    
+- This "write-time" enforcement guarantees two key benefits: high query performance and excellent data quality, as the warehouse only accepts data that conforms to a predefined structure.
+
+
+schema on read:
+- Raw data is loaded directly into a data lake, like Cloud Storage, with minimal upfront transformation.
+    
+- This approach offers maximum flexibility for ingesting complex or evolving datasets, but it pushes the complexity downstream. The primary drawback is slower query performance, as data must be parsed and validated every time it's read.

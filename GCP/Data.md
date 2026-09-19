@@ -338,3 +338,37 @@ It is based on continuous query, can push query results to pussub bigtable anoth
 
 Modifying the table's properties with **--require_partition_filter** is BigQuery's native and most direct way to enforce partition filtering. It's a table-level setting that causes any query against that specific table to fail if it doesn't include a predicate on the partitioning column, thereby preventing accidental full table scans and ensuring cost/performance control.
 
+BQML:
+Model preparation -> model training -> model evaluation
+
+object table enable BQ visit multi modal data like text and image: 
+```SQL
+''' BUILD DATASET'''
+CREATE EXTERNAL TABLE
+	``
+WITH CONNECTION ``
+OPTIONS(
+	object_metadata = ''
+	uris = ['gs://.....']
+	 
+)
+ '''CREATE MODEL'''
+CREATE OR REPLACE MODEL ``
+REMOTE WITH CONNECTION ``
+OPTION (endpoint = 'gemini-pro')
+
+'''USE MODEL'''
+ML.GENERATE_TEXT(
+MODEL project_id.dataset.model,
+(
+	SELECT social_media_resource, customer_id, location, review_text, CONCAT(
+		'Classify the sentiment of the following text as pos or neg' AS prompt
+		FROM `gemini_demo.customer_review`
+	)
+),
+STRUCT(
+	prmompt AS prompt
+	[...]
+)
+)
+```

@@ -1,5 +1,12 @@
 
 Architecture
+
+Beam/Dataflow             Spark
+Worker          ≈        Executor
+DoFn            ≈        Task中的执行逻辑
+Pipeline        ≈        Spark Application
+Runner          ≈        Spark执行引擎/cluster manager组合
+
 1 Dataflow shuffle service:
 **Worker 不需要自己负责保存和管理整个 shuffle 数据。**
 Google Cloud 负责：
@@ -78,6 +85,7 @@ DoFn
    │
    └── process(element)
 
+**State API**
 应该让runner 管理state， state都是per-key
 ```python
 class MyDoFn(beam.DoFn):
@@ -128,6 +136,106 @@ class CountFn(beam.DoFn):
         count.write(current + 1)
 ```
 > **对于某个 key，跨多次 `process()` 调用保存一个 count。**
+
+States type:
+1 value 2 bag 3 combining 4 map 5 set
+
+
+Buffer state and count state for event trigger
+                    user1
+                      │
+              ┌───────┴────────┐
+              ↓                                                                ↓
+         CountState)(CombiningValueStateSpec)        BufferState(BagStateSpec)
+         count = 3         [A,B,C]
+              │                │
+              └───────┬────────┘
+                      ↓
+                 count == 100?
+                      ↓
+                    Yes
+                      ↓
+                批量处理 100 个
+                      ↓
+                  clear state
+
+Should remember to clear the state or it will influence the following process\.
+
+> **每个 user 在一个 window 内缓存 event，当 window 结束并经过 allowed lateness 后，Timer 触发，把这个 user 的所有 event 批量输出。**
+
+```python
+ALLOWED_LATENESS = 60  # 60 seconds
+
+
+class BufferEvents(beam.DoFn):
+
+    # State 1: 保存具体的 event
+    BUFFER_STATE = BagStateSpec(
+        'buffer',
+        StrUtf8Coder()
+    )
+
+    # State 2: 记录 event 数量
+    COUNT_STATE = CombiningValueStateSpec(
+        'count',
+        VarIntCoder(),
+        sum
+    )
+
+    # Timer
+    EXPIRY_TIMER = TimerSpec(
+        'expiry_timer',
+        TimeDomain.WATERMARK
+    )
+
+    def process(
+        self,
+        element,
+        window=beam.DoFn.WindowParam,
+        buffer_state=beam.DoFn.StateParam(BUFFER_STATE),
+        count_state=beam.DoFn.StateParam(COUNT_STATE),
+        expiry_timer=beam.DoFn.TimerParam(EXPIRY_TIMER)
+    ):
+        user_id, event = element
+
+        # 1. 保存 event
+        buffer_state.add(event)
+
+        # 2. count + 1
+        count_state.add(1)
+
+        # 3. 设置 event-time timer
+        expiry_timer.set(
+            window.end + ALLOWED_LATENESS
+        )
+
+    @on_timer(EXPIRY_TIMER)
+    def expire(
+        self,
+        window=beam.DoFn.WindowParam,
+        buffer_state=beam.DoFn.StateParam(BUFFER_STATE),
+        count_state=beam.DoFn.StateParam(COUNT_STATE)
+    ):
+
+        # 4. Timer 到时间后读取 State
+        events = list(buffer_state.read())
+        count = count_state.read()
+
+        # 5. 输出
+        yield {
+            'window_start': window.start.to_utc_datetime(),
+            'window_end': window.end.to_utc_datetime(),
+            'count': count,
+            'events': events
+        }
+
+        # 6. 清理 State
+        buffer_state.clear()
+        count_state.clear()
+```
+
+Pipeline：
+Timer API
 
 
 - **GroupByKey** → _Group values by key_
@@ -328,10 +436,26 @@ Freshness ≈ event ──┼─ processing latency （数据cpu处理不足）
 2 Processing-time trigger 每多久输出一次结果
 3 Data-driven / Count trigger 根据收到多少数据
 
+| Trigger                              | 看什么时间                   |
+| ------------------------------------ | ----------------------- |
+| `AfterWatermark`                     | **Event Time 的进度**      |
+| `AfterProcessingTime`                | **Worker 实际处理时间**       |
+| `AfterPane.elementCountAtLeast(100)` | **收到多少条数据**             |
+| AfterWatermark(late=AfterCount(1))   | watermark后每次收到一个累计消息就触发 |
+
+
 一个 Window 可以 Trigger 多次
 Tigger 计算内容：
 1 Accumulating 每次计算trigger全部内容
 2 Discarding 只输出上次trigger之后的数据
+```python
+| "Window" >> beam.WindowInto(
+    beam.window.FixedWindows(60),
+    trigger=beam.trigger.AfterWatermark(),
+    accumulation_mode=beam.trigger.AccumulationMode.DISCARDING
+)
+```
+
 ```python
 def add_timestamp(element: CommonLog):
     event_time = datetime.strptime(element.timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -487,3 +611,146 @@ MODEL `gemini_demo.gemini_flash`,
 STRUCT(
    0.2 AS temperature, TRUE AS flatten_json_output)));
 ```
+
+Error handling
+failure types
+1 failure building the pipeline
+2 failure when starting the pipeline , like service account error or api enabled
+3 failure during pipeline execution
+4 failure 
+
+In batch pipelines, job fail will retry 4 times
+In streaming pipelines, job retry indefinitely
+
+**Pipeline optimization:**
+
+Encoding and decoding are a large source of overhead. 不要为了读取一个字段，把整个大对象都 decode
+假设你有一个大的 sliding window, 先按小的window去combine 再聚合这些小的window
+先把大量明细数据压缩成少量聚合结果，再进行后面的 Window/Combine
+
+Fusion：Dataflow 会自动合并 Transform，可让一个worker去处理
+不过Fusion + Fanout 可能产生问题 一个 worker 可能连续处理巨量 fanout 数据。
+可以 强制把中间结果重新分发，让后面的工作重新获得并行化机会。
+```
+ParDo
+ ↓
+Fanout
+ ↓
+Reshuffle
+ ↓
+Next transform
+```
+Aggregation 会天然阻止 ParDo Fusion Dataflow 不会把两个 ParDo 跨过 aggregation 强行 Fusion。
+
+不要使用大量log.error 或log.info，很影响性能
+使用deadletter queue 然后统计数量
+
+Data skew solution in dataflow
+1 withFanout(int)
+2 withHotKeyFanout(sfn)
+3 Use dataflow shuffle service
+
+To detect hot keys, set hotKeyLogginEnabled flag to true, print which key is hot
+Too few key will cause not parallel inplementation, and thus idel worker, could use hashes separating keys out internally
+如果不同 Window 之间彼此独立，那么可以把 Window 信息也加入 Key，让不同 Window 的数据分散到更多 Worker 上并行处理。
+
+Switch to uncompressed files while using TextIO, or switch to compressed Avro format.
+
+Dataflow 本身可以非常快，但它太快了，反而可能把下游外部系统“打爆”。
+如果你的代码里面有：
+```
+call_external_api(element)
+```
+对于batch或straming 的backlog
+
+解决方案：Batch external calls
+```python
+events | beam.GroupIntoBatches(100)
+```
+或者
+```
+@StartBundle
+    ↓
+创建 buffer
+
+process()
+    ↓
+不断把数据放进 buffer
+
+@FinishBundle
+    ↓
+批量发送
+```
+Updating
+
+旧版 Streaming Pipeline
+        │
+        │ ① Snapshot
+        ▼
+保存 State + Buffer
+        │
+        │ ② Update
+        ▼
+新版 Streaming Pipeline
+        │
+        ├── 正常运行 → 继续处理
+        │
+        └── 发现有问题 → 从 Snapshot 回滚
+
+When updating the pipeline, create dataflow snapshot
+When taking snapshot, the dataflow wiil block
+Snapshot 最重要的用途：Rollback
+
+snapshot with source:
+不仅保存 Dataflow 内部 State，还尽量把 Pub/Sub 中“还没处理的消息位置”与 State 对齐。
+
+新旧pipeline要做transform name mapping
+这样知道保存的state是哪个transform用的
+
+哪些变化容易导致 Update 失败？
+1 改了 Transform name，但是没有 mapping
+2 增加/删除 Side Input
+3 修改 Coder
+4 删除 Stateful Operation
+
+Old Streaming Job
+        │
+        │ Snapshot
+        ▼
+   Snapshot S1
+        │
+        │ create from snapshot
+        ▼
+New Job
+        │
+        ▼
+Streaming Engine
+
+Snapshot ↓ 解决的是： “我怎么保存/恢复当前 Streaming Pipeline 的状态？” Blue-Green ↓ 解决的是： “我怎么让新旧两个版本独立运行，验证后再切换？” Update ↓ 解决的是： “我怎么把正在运行的 Pipeline 换成新版本，同时保留兼容的状态？”
+
+另一种方法
+不使用cancel 使用 drain
+如果修改导致 Streaming Update 不兼容，就 Drain 旧 Pipeline，然后用更新后的代码启动新的 Job。
+`Drain` 可以理解成：
+> **不要直接杀掉正在运行的 Streaming Pipeline，而是让它停止接收新的数据，同时把已经进入 Pipeline 的数据尽量处理完，然后让 Job 结束。**
+
+no data is lost, but all windows are closed, resulting in incomplete aggregation, use beam paninfo object to identify and filter incomplete windows
+
+Snapshot for pubsub
+```
+1 
+gcloud pubsub snapshots create my-snapshot --subscription=my-sub
+2 
+gcloud dataflow jobs drain
+3 把 Pub/Sub Subscription 的读取位置往回/往前移动
+gcloud subsub subscriptions seek my-sub --snapshot=my-snapshot
+4
+gcloud dataflow jobs rub my-job-name --gcs_location=...
+```
+The data maybe duplicated
+
+retention for Dataflow Snapshots is 7 days
+
+Flex templates for dataflow
+developer packages the pipeline artifacts into Docker image and stages the image on Google Container Registry In addition, the developer creates a metadata specification file on Cloud Storage.
+the template launches service, reads the metadata spec file, downloads the Docker image, and invokes the pipeline using user-supplied values.

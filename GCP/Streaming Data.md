@@ -4,7 +4,7 @@ Pub/Sub and  manged kafka
 1 Managed vs. serverless
 2 Scalability auto/ adjust parameters
 3 Message retention 7 days(can be long to 31) / even forever
-4 Can at-least-once delivery or exact once delivery, can maintain order with key/ exactly once, ordered only within partition
+4 Can at-least-once delivery or exact once delivery(通过 delivery/ack ID 的有效性控制重新投递在 exactly-once 模式下，过期 Ack ID 的 `acknowledgment` 请求会失败。), can maintain order with key/ exactly once, ordered only within partition
 5 pub sub is better integrated with GCP services
 
 pubsub

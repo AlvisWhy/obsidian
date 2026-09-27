@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "ddf3c4a23e3a54d3",
+        "id": "a57b5c5f89338c3c",
         "type": "tabs",
         "children": [
           {
-            "id": "e61b3bd2f4fc00f2",
+            "id": "4a8dd9e63f9a7768",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -196,8 +196,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "e61b3bd2f4fc00f2",
+  "active": "4a8dd9e63f9a7768",
   "lastOpenFiles": [
+    "2026-09-26.md",
+    "Databricks/Databricks.md",
     "GCP/Data Goverance.md",
     "GCP/Dataflow.md",
     "GCP/Streaming Data.md",
@@ -211,7 +213,6 @@
     "GCP/Cloud IDS.md",
     "GCP/cloud build.md",
     "GCP/Compute.md",
-    "Databricks/Databricks.md",
     "Databricks/Project setup.md",
     "Databricks/configuration.md",
     "Airflow/Code.md",
@@ -223,7 +224,6 @@
     "Databricks/Architecture.md",
     "Shell/shell.md",
     "SQL/SQL Syntax.md",
-    "kubernetes.md",
     "Pasted image 20260830141718.png",
     "SQL",
     "ES",

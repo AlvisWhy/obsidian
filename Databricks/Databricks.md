@@ -389,8 +389,17 @@ Will verify all data in the table confirm the rules before adding rule.
 ```
 #### CONSTRAINS
 
+For streaming tables, we can not alter the constrains after creation。所以要在定义schema时加入
+
 ```SQL
 ALTER TABLE order ADD CONSTRAINT timestamp_inrange CHECK(order_timestamp >= '2020-01-01')
+```
+
+Primary KEY Constraint
+创建一个 constraint（约束），并把这个约束命名为 `pk_station
+PRIMARY KEY constraint 会保证主键值唯一且非 NULL`
+```SQL
+CONSTRAINT pk_aqi PRIMARY KEY (station_id, measurement_time)
 ```
 
 ALTER TABLE order DROP CONSTRAIN timestamp_inrange

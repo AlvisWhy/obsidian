@@ -554,7 +554,7 @@ VACUUM my_table RETAIN 720 HOURS
 
 """or set for table"""
 
-ALERT TABLE t SET TABLEPROPERITIES (
+ALTER TABLE t SET TABLEPROPERITIES (
 	delta.deleteFileRetentionDuration = 'interval N days'
 )
 
@@ -671,6 +671,50 @@ def orders_quarantine():
 	return orders_df
 ```
 
+1 expectations
+event_log("{ingestion_pipeline_id}") where event_type = 'flow_progress'
+```SQL
+CREATE OR REPLACE VIEW {catalog}.stepright.dq_expectations_history AS
+SELECT
+    origin.pipeline_name,
+    origin.flow_name AS table_name,
+    timestamp,
+    exp.col.name AS rule_name,
+    exp.col.dataset,
+    exp.col.passed_records,
+    exp.col.failed_records,
+    ROUND(
+        exp.col.failed_records
+        / NULLIF(exp.col.passed_records + exp.col.failed_records, 0)
+        * 100,
+        2
+    ) AS failure_rate_pct
+FROM {catalog}.stepright.ingestion_event_log_raw AS origin
+CROSS JOIN LATERAL EXPLODE(
+    FROM_JSON(
+        details:flow_progress.data_quality.expectations,
+        'array<struct<
+            name:string,
+            dataset:string,
+            passed_records:int,
+            failed_records:int
+        >>'
+    )
+) AS exp
+WHERE event_type = 'flow_progress'
+
+/* 
+**`CROSS JOIN` = 所有行互相组合。**  
+**`CROSS JOIN LATERAL EXPLODE(array)` = 每一行只 explode 自己的 array。**
+*/
+```
+use event hook for expectations
+
+2 quarantine table
+count from all quarantine tables
+3 referential integrity(write check query for results to check)
+not exists or anti joins
+
 SDP (new version for DLT)
 
 FLow types:
@@ -733,3 +777,12 @@ Jobs
 Tasks: pipeline/ python/ notebook
 
 Trigger: schedule/ file arrival/ delta table change/manual API
+
+
+Alert
+Use this function to receive all the events and handle them with the hook
+```python
+@dp.on_event_hook(max_allowable_consecutive_failure=3)
+def event_handler(event:dict):
+	
+```

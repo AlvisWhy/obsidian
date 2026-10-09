@@ -23,8 +23,11 @@ dbutils.widgets.get("")
 
 In DAB:
 
-```
+```shell
 databricks bundle deploy -t prod --var="catalog=citibike_prod"
+
+# BIND config yml resource with the existed resource in databricks
+databricks bundle deployment bind config_id real_resource_id --target dev
 ```
 
 complex variable can be used by other components for reference

@@ -562,3 +562,604 @@ def spark():
 
     spark.stop()
 ```
+
+Mock in unittest
+```python
+from unittest.mock import Mock
+
+api_client = Mock(return_value=200)
+
+response_code = api_client("http://example.com")
+
+```
+
+File operation, using 'with' auto close the file after the indent finished
+```python
+filename = "message.txt"
+try:
+	with open(filename, 'r') as file_handle:
+		print(f"File opened: {file_handle}")
+		content = file_handle.read()
+		
+excpect FileNotFoundError:
+	print(f"Error: The file '{file_name}' not found.")
+	
+# Read with lines to handle large files
+with open('file_name', 'r') as log_file:
+	for line in log_file:
+		if "ERROR" in line:
+			print("...")
+
+with open('data.txt', 'r', encoding='utf-8') as f:
+	for line in f:
+		clean_line = line.strip()
+```
+Reading csv
+```python
+with open('inventory.csv', mode = 'r', encoding='utf-8') as csv_file:
+	reader = csv.DictReader(csv_file)
+	for row in reader:
+		name = row["product_name"]
+		...
+```
+Write file, if file not exist, will create a new file
+```python
+file_name = "daily_report.txt"
+
+with open(filename, "w", encoding="utf-8") as file:
+	file.write("Daily status Report\n")
+	file.write("Date: 2023-10-27\n")
+# "a" apend mode, cursor at the end of the file	
+with open("log_file", 'a', "utf-8") as f:
+	f.write("")
+
+```
+For binary:
+- `'rb'` for reading binary data
+- `'wb'` for writing binary data
+
+path Handling
+```python
+from pathlib import Path
+
+base_dir = Path.cwd()
+log_dir = base_dir/"app_data"/"logs"
+error_log = log_dir/"error.txt"
+
+file_path = Path("data/reports/...")
+```
+```python
+from pathlib import Path
+p = Path("settings.ini")
+p.touch()
+
+if p.exists():
+	if p.is_file():
+	
+	elif p.is_dir:
+
+p.unlink()
+
+# iterdir() return every file and subdirectories in the location
+# glob() return wildecard partterns similar to those used in the cmd lie
+
+data_dir = Path("dataset")
+for item in data_dir.iterdir():
+	print (item.name)
+
+for image in data_dir.glob("*.png"):
+    print(f"Found image: {image.name}")
+```
+Serialization
+dict
+- `dict` →→ JSON Object `{"key": value}`
+- `list` / `tuple` →→ JSON Array `[value, ...]`
+- `str` →→ String
+- `int` / `float` →→ Number
+- `True` / `False` →→ `true` / `false`
+- `None` →→ `null`
+
+- `json.dumps(obj)`**:** Returns a JSON string from a Python object.
+- `json.loads(json_str)`**:** Returns a Python object from a JSON string.
+- `json.dump(obj, file)`**:** Writes a Python object directly to a file.
+- `json.load(file)`**:** Reads a JSON object directly from a file.
+
+```python
+import json
+
+user_config = {
+	"user_name": "developer",
+	"theme": "dark"
+}
+with open("user.txt", 'w', encoding='utf-8') as file:
+	json.dump(use_config, file, indent = 4)
+
+with open("user.txt", 'r', encoding='utf-8') as file:
+	loaded_config = json.load(file)
+```
+
+Iterator and iterable
+```python
+cursor = iter(container_name)
+first_item = next(cursor)
+second_item = next(cursor)
+```
+
+generator
+Avoid storing all values in memory. 适合处理**无限数据、超大文件、streaming 数据**：它不需要一次性把所有结果放进内存。
+We create a generator by using the `yield` keyword instead of `return`. When Python executes a function that contains `yield`, the following sequence occurs:
+- **Pause and return:** The function yields a value to the caller and then pauses execution.
+- **Save state:** Python preserves the function’s entire state, including local variables and the current execution position.
+- **Resume:** When the next value is requested (using `next()` or a `for` loop), execution resumes exactly where it left off, immediately after the previous `yield`.
+```python
+# 2 methods for generator
+# Generator Expression (Lazy)
+g = (x * 2 for x in range(10))
+# Could use next and for loop to iterate over it 
+for num in g:
+    print(num)
+    
+# Generator function
+def error_log_reader(file_path):
+	with open(file_path, "r") as file:
+		for line in file:
+			if "ERROR" in line:
+				yield line.strip()
+log_gen = error_log_reader("system.log")
+
+for error in log_gen:
+    print(error)
+```
+
+Chaining generators
+```python
+raw_data = "  10,  20,  bad_data, 30  "
+
+# Step 1: Split the string (creates a list, unavoidable here for split)
+items = raw_data.split(',')
+
+# Step 2: Generator to strip whitespace
+clean_items = (item.strip() for item in items)
+
+# Step 3: Generator to filter only digits
+valid_items = (item for item in clean_items if item.isdigit())
+
+# Step 4: Generator to convert to integer
+integers = (int(item) for item in valid_items)
+
+# Consume the pipeline
+print(f"Sum of valid integers: {sum(integers)}")
+```
+
+Iterator class
+To make an object compatible with a `for` loop, it must follow the iterator protocol. This protocol requires two special dunder methods:
+1. **`__iter__()`****:** This is the entry point. When we start a loop, Python calls this method to get the iterator object.
+    
+2. **`__next__()`****:** This is the engine. Python calls this repeatedly to fetch the next item in the sequence
+an iterator must raise the `StopIteration` exception for ending
+```python
+from datetime import timedelta, date
+class DateRange:
+	def __init__(self, start:date, end:date):
+		if start > end:
+			raise ValueErro("")
+		self.current_date = start
+		self.end_date = end
+		
+	def __iter__:
+		return self
+	
+	def __next__ (self):
+		if self.current_date >= self.end_date:
+			raise StopIteratoin
+		today = self.current_date
+		self.current_date += timedelta(days=1)
+		return today
+```
+We now have two ways to **create custom iteration logic**. Here is how to choose between them:
+
+1. **Use generators (Functions with yield)** when you want concise code for a simple stream of data. They handle state and `StopIteration` automatically. This is the default choice for 90% of cases.
+2. **Use class-based iterators** when you need:
+    **Complex state:** Multiple attributes tracking progress.
+    **Public attributes:** You need to access the current state or configuration (e.g., `.current_date`) from outside the loop.
+    **Inheritance:** You want to create a base iterator and subclass it for specific behaviors.
+
+Requests
+Use response .json to transfer response body into python obj (dict or list)
+```python
+response.json()
+
+query_params = {"postId": 1}
+
+# Headers: Metadata about the request
+custom_headers = {
+    "User-Agent": "MyPythonApp/1.0",
+    "Accept": "application/json"
+}
+
+response = requests.get(url, params=query_params, headers=custom_headers)
+# Send a POST request. The 'json' parameter handles formatting.
+response = requests.post(url, json=new_post)
+
+try:
+    # We set a timeout of 2 seconds. Since the server takes 5, this will fail.
+    response = requests.get(url, timeout=2)
+    print("Success:", response.status_code)
+except requests.exceptions.Timeout:
+    print("The request timed out. The server took too long to respond.")
+```
+`raise_for_status()` is essential because `requests` considers error pages (like 404) "successful" downloads. This method converts those error codes into actual exceptions so our `try/except` block can handle them.
+```python
+try:
+    response = requests.get(url, timeout=3)
+     # raise_for_status() triggers an HTTPError for 4xx/5xx responses
+    response.raise_for_status()
+    print(f"Connected to {url}")
+        
+except requests.exceptions.ConnectionError:
+    print(f"Failed to connect to {url}. Is the internet down?")
+except requests.exceptions.HTTPError as e:
+    print(f"Server returned an error: {e}")
+except requests.exceptions.RequestException as e:
+    # Catch-all for any other request-related error
+    print(f"An ambiguous error occurred: {e}")
+```
+
+Package
+package is a directory containing modules and a special file named `__init__.py`.
+Calls the function using the full namespace path `package.module.function`.The `__init__.py` file is the package’s entry point. It is executed automatically the moment the package (or any module within it) is imported.
+
+In init file, if import related functions, others can directly call function from package namespace.
+```python
+# File: pixel_art/__init__.py
+
+# We import specific items from submodules into the package namespace
+from pixel_art.shapes import draw_circle
+from pixel_art.colors import get_red  # Assuming colors.py exists
+
+VERSION = "1.0.0"
+
+# File: pixel_art/__init__.py
+from pixel_art.shapes import draw_circle, draw_square
+
+# Only these names will be imported during 'from pixel_art import *'
+__all__ = ['draw_circle']
+
+```
+
+we use **relative imports** with dot notation:
+- `.` refers to the current package.
+- `..` refers to the parent package.
+
+- **`os.environ['KEY']`****:** Raises a `KeyError` if the variable is not defined. This approach is appropriate when the configuration is mandatory, and the application should fail immediately if it is missing.
+    
+- **`os.getenv('KEY', default)`****:** Returns `None`, or a specified default value, if the variable does not exist. This method is preferable for optional configuration settings.
+venv
+```shell
+python -m venv .venv
+
+source .venv/bin/activate
+
+pip freeze > requirements.txt
+```
+
+`load_dotenv()` 是 Python `python-dotenv` 库里的函数，作用 把 `.env` 文件里的配置加载到当前 Python 进程的环境变量 `os.environ`  （Standard `load_dotenv()` behavior respects existing environment variables）
+```python
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+print(os.getenv("DATABASE_URL"))
+print(os.getenv("API_KEY"))
+```
+
+Concurrency(threading in python) and Parallelism(processes in python)
+In an I/O-bound scenario (like a web server), concurrency drastically improves throughput.
+In CPU-bound workloads, concurrency based on time slicing can reduce performance
+
+Standard Python (CPython) includes a constraint called the Global Interpreter Lock (GIL). The GIL is a mutual exclusion mechanism that allows only one thread to execute Python bytecode at a time.
+a multithreaded Python program will typically utilize only one core at a time for executing Python instructions.
+```python
+import threading
+import time
+def simulate_download(file_name):
+	sleep(2)
+thread1 = threading.Thread(target=simulate_download, args=("Photo.jpg"))
+thread2 = threading.Thread(target=simulate_download, args=("adsg.pdf"))
+thread1.start()
+thread2.start()
+thread1.join()
+thread2.join()
+```
+
+Synchronization with locks
+Use mutex and with to acquire lock at the start of the block and release at the end of the block
+
+```python
+import threading
+lock = threading.Lock()
+
+counter = 0
+def safe_counter():
+	global counter
+	for _ in range(100):
+		with lock:
+			counter += 1
+threads = []
+for i in range(3):
+	t = threading.Thread(target = safe_counter)
+	threads.append(t)
+	t.start()
+for t in threads:
+	t.join()
+
+```
+
+Daemon thread
+A daemon thread runs in the background and does not prevent the program from shutting down. Once all non-daemon threads (typically including the main thread) have completed, the interpreter terminates any remaining daemon threads automatically.
+```python
+import threading
+import time
+def background_logger():
+	while True:
+		print("Logger: Writing")
+		sleep(1)
+log_thread =threading.Thread(target= background_logger, daemon = True)
+log_thread.start()
+
+
+```
+
+Unlike threads, which operate within a single process and share both memory and the Global Interpreter Lock (GIL), each process has an independent memory space and its own GIL.
+When using `multiprocessing`, all executable code that spawns processes must be protected within an `if __name__ == "__main__":`
+```python
+import multiprocessing
+import time
+
+def heavy_compueation(name):
+	for i in range(1000):
+		result += i
+
+if __name__ == "__main__":
+	p1 = multiprocessing.Process(target=heavy_computation, args=("A",))
+    p2 = multiprocessing.Process(target=heavy_computation, args=("B",))
+    
+    p1.start()
+    p2.start()
+    
+    p1.join()
+    p2.join()
+```
+
+Process Pool with map function
+```python
+import multiprocessing
+def square_number(n):
+	return n*n
+
+if __name__ == '__main__':
+	numbers = [1,2,3,4,5,6]
+	with multiprocessing.Pool() as pool:
+		results = pool.map(square_number, numbers)
+
+```
+
+Interprocess Communication (IPC) 
+use multiprocessing.Queue() to transmit data among the processes
+```python
+import multiprocessing
+
+def producer(queue):
+    """Generates data and puts it into the queue."""
+    for i in range(3):
+        item = f"Data-{i}"
+        queue.put(item)
+        print(f"Produced: {item}")
+    # Signal that production is done
+    queue.put(None)
+
+def consumer(queue):
+    """Retrieves data from the queue and processes it."""
+    while True:
+        item = queue.get()
+        if item is None:  # Check for the stop signal
+            break
+        print(f"Consumed: {item}")
+
+if __name__ == "__main__":
+    # Create a thread-safe, process-safe queue
+    q = multiprocessing.Queue()
+
+    # Create processes sharing the queue
+    p1 = multiprocessing.Process(target=producer, args=(q,))
+    p2 = multiprocessing.Process(target=consumer, args=(q,))
+
+    p1.start()
+    p2.start()
+
+    p1.join()
+    p2.join()
+```
+
+Using queue to safely pass messages between threads, it internally implements locking
+```python
+import threading
+import queue
+import time
+
+def producer(q, n):
+	for i in range(n):
+		item = str(n)
+		q.put(n)
+	q.put(None)
+	
+def comsumer(q):
+	while True:
+		item = q.get()
+		if item is None:
+			break
+queue1 = queue.Queue()
+prod = threading.Thread(target = producer, args=(q,5))
+coms = threading.Thread(target = consumer, args=(q))
+prod.start()
+coms.start()
+prod.join()
+coms.join()
+```
+
+signal with events
+- `set()`**:** Sets the flag to `True`.
+- `clear()`**:** Sets the flag to `False`.
+- `wait()`**:** Blocks execution until the flag becomes `True`.
+```python
+import threading
+import time
+
+# Create an event object
+stop_event = threading.Event()
+def backend():
+	while not stop_event.is_set()
+		print("working")
+		if stop_event.wait(timeout = 1.0):
+			print("stop working")
+			break
+t = threading.Thread(target=backend)
+t.start()
+stop_event.set()
+t.join()
+```
+
+Async IO
+Also used for I/O bound tasks
+
+A coroutine is defined using the `async def` syntax.
+```python
+import asyncio
+async def stop():
+	print("start")
+	await asyncio.sleep(1)
+	print("stop")
+if __name__ == "__main__":
+	asyncio.run(stop())
+```
+ 
+asyncio.run() 从同步程序开启一个异步环境
+
+async function run only create a coroutine object, we have to use await or asyncio to trigger it
+
+**`await` = 启动/执行这个 coroutine，并等待它完成。**  
+**`asyncio.create_task()` = 把 coroutine 安排到 event loop 中运行，但当前代码不立即等待它完成。**
+
+Use asyncio.gather(),the event loop can manage them concurrently rather than one at a time.
+With `asyncio.gather()` could guarantee, no matter which task complete first
+```python
+import asyncio
+import time
+async def simulate_fetch(id, duration):
+	await asyncio.sleep(duration)
+	return
+async def main():
+	results = await asyncio.gather(
+        simulated_fetch(1, 1.0),
+        simulated_fetch(2, 1.0),
+        simulated_fetch(3, 1.0)
+    )
+if __name__ == "__main__":
+	asyncio.run(main())
+```
+
+Decorator function
+```python
+def my_decorator(func):
+	def wrapper():
+		print("decorator")
+		func()
+	return wrapper
+
+@my_decorator
+def my_func():
+	print("func")
+	
+# Decorator with random args
+# args for positional argument, kwargs for keyword arguments
+def log_decorator(func):
+	def wrapper(*args, *kwargs):
+		print("calling function")
+		func(*args, *kwargs)
+		print("function_end")
+	return wrapper
+@log_decorator
+def add(a, b):
+	return a + b
+	
+# Use functool.wrap, we can maintain the metadata of the decorated function
+def robust_decorator(func):
+    @functools.wraps(func)  # Fixes the metadata
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+```
+
+**parameterized decorator** is actually a function that accepts arguments and _returns a decorator_. This outer function is often called a **decorator factory** because its sole job is to manufacture the actual decorator based on the settings we provide.
+```python
+import functools
+def repeat(times): # the factory
+	def decorator(func): # the decorator
+		@functools.wrap(func)
+		def wrapper(*args, **kwargs):
+			for _ in range(times):
+				result = func(*args, **kwargs)
+			return result
+		return wrapper
+	return decorator
+
+@repeat(times = 2)
+def greet(name):
+	print(name)
+```
+Lifecycle of the with block
+
+1. **`__enter__(self)`**: Python calls this immediately when the `with` statement begins. If the `with` statement includes an `as target` clause, the return value of `__enter__` is assigned to `target`.
+    
+2. **`__exit__(self, exc_type, exc_val, exc_tb)`**: Python calls this when the execution leaves the `with` block. This happens whether the block finishes normally or stops due to an exception. exc_type: error type, exc_val: error val, exc_tb: error traceback
+
+If we implement these two methods in a class, instances of that class can be used in `with` statements.
+```python
+import time
+class Timer:
+	def __init__(self, label):
+		self.label = lable
+		self.start = None
+	def __enter__(self):
+		 self.start = time.time()
+        return self
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		end =  time.time()
+		duration = end -self.start
+		return False
+with Timer("my_label") as t:
+	time.sleep(1)
+
+# Use the class to supress certain type of error
+class ErrorSuppressor:
+    def __init__(self, error_type):
+        self.error_type = error_type
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Check if an exception happened and if it matches the type we want to suppress
+        if exc_type is not None and issubclass(exc_type, self.error_type):
+            print(f"Suppressed error: {exc_val}")
+            return True  # Swallow the exception
+        
+        # If it's a different error, or no error, returning None (default) propagates it.
+        return False
+
+print("Start")
+```
+Some build in functions
+object.attribute
+getattr(object, name, default)

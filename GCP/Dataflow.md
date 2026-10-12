@@ -754,3 +754,11 @@ retention for Dataflow Snapshots is 7 days
 Flex templates for dataflow
 developer packages the pipeline artifacts into Docker image and stages the image on Google Container Registry In addition, the developer creates a metadata specification file on Cloud Storage.
 the template launches service, reads the metadata spec file, downloads the Docker image, and invokes the pipeline using user-supplied values.
+
+updating dataflow system
+1 完全停掉原来的
+in target system
+snapshot for pubsub
+for kafka infinite replay
+2 使用update create mapping for it 可以继承原来的部分
+3 write to 2 pipelines and 2 targets

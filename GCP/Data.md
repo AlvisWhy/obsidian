@@ -30,7 +30,7 @@ MySQL / PostgreSQL
 Sensitive Data Protection(DLP before)
 De-identify the PII before storing or scanning data in storage
 
-DataStore/FireStore
+DataStore/FireStore（100TiB）
 Use index.yaml create index for complex search.
 
 BigQuery User: (roles/bigquery.user) When applied to a dataset, this role provides the ability to read the dataset's metadata and list tables in the dataset. When applied to a project, this role also provides the ability to run jobs, including queries, within the project. A principal with this role can enumerate their own jobs, cancel their own jobs, and enumerate datasets within a project. **Additionally, allows the creation of new datasets within the project; the creator is granted the BigQuery Data Owner role(roles/bigquery.dataOwner) on these new datasets.** Lowest-level resources where you can grant this role: Dataset BigQuery Job User: (roles/bigquery.jobUser) Provides permissions to run jobs, including queries, within the project. Lowest-level resources where you can grant this role: Project
@@ -40,7 +40,7 @@ Datastore
 key: json, can have multiple keys
 properties: json
 
-Cloud SQL expansion
+Cloud SQL expansion （max 64 TB）
 Storage: set auto-storage-increase
 cpu: set alert and manual change
 could partition according to column, but no sharding support
@@ -51,6 +51,10 @@ For minimal down time in on-prem -> cloud sql migration:
 1 open binlog for on-prem sql
 2 migrate all data to cloudsql
 3 increment replication from onprem to cloudsql(replay binlog). When data become consistent, completely switch to cloudsql
+
+AlloyDB
+advance postgre（max 128TB）
+both OLAP and OLTP
 
 Bigquery can be partitioned by date for tables, set partition expiration could auto delete outdated data.
 
@@ -89,6 +93,8 @@ Dataprep: graphic data washing, less used
 Dataprex: better tool to operate on data.
 
 BIGTABLE:
+high speed database
+can write inifinite table
 storage depends on row key to divide data to different nodes
 uneven row key will cause latency with hotspot problem
 Row key: search reference

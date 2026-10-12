@@ -1163,3 +1163,39 @@ print("Start")
 Some build in functions
 object.attribute
 getattr(object, name, default)
+
+```python
+import argparse
+def main():
+	parser = argparse.ArgumentParser(description = "a simple file reader")
+	# Positional argument
+	parser.add_argument("filename", type = string, help = "Name of file to read")
+	# Optinal argument
+	parser.add_argument("-n", "--lines", type = int, help = "Numbers of lines")
+	# restrict input to specific choices
+	
+	parser.add_argument(
+		"-op",
+		choice = ["r", "w", "wr"],
+		default = "add"
+	)
+	args = parser.parse_args()
+	
+	try:
+		with open(args.filename, 'r') as f:
+			lines = f.readlines()
+			limit = args.lines if args.lines else len(lines)
+			
+			for i in range(limit):
+				print(lines[i])
+
+```
+
+```shell
+# 2. Create the source code directories
+# The -p flag creates 'src' AND 'simple_tool' at the same time
+mkdir -p src/simple_tool
+
+# 4. View the structure
+tree .
+```

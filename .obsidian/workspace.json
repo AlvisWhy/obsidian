@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "GSNA_Project/airflow repo.md",
+                "file": "GCP/Data.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "airflow repo"
+              "title": "Data"
             }
           }
         ]
@@ -198,8 +198,14 @@
   },
   "active": "4a8dd9e63f9a7768",
   "lastOpenFiles": [
-    "python basic/python.md",
+    "GCP/Data Goverance.md",
+    "GCP/Dataflow.md",
+    "GCP/Data.md",
+    "GSNA_Project/ETLRepo.md",
     "GSNA_Project/airflow repo.md",
+    "SQL/SQL Syntax.md",
+    "python basic/python.md",
+    "未命名.canvas",
     "Airflow/Architecture.md",
     "Databricks/Databricks.md",
     "Databricks/configuration.md",
@@ -222,15 +228,9 @@
     "Databricks/SparkSQL.md",
     "Databricks/Project setup.md",
     "Databricks/command.md",
-    "Databricks/Architecture.md",
-    "GCP/Data Goverance.md",
-    "GCP/Dataflow.md",
-    "GCP/Streaming Data.md",
-    "GCP/Data.md",
     "SQL",
     "ES",
     "Hadoop",
-    "未命名.canvas",
     "Jenkins",
     "Shell",
     "AZure/未命名",

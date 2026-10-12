@@ -86,6 +86,7 @@ GROUP BY ActivityLevel;
 ```
 
 # Rolling Totals
+
 ```SQL
 AVG(Column) OVER (
     PARTITION BY
@@ -102,6 +103,8 @@ When we need to calculate rolling metrics on already grouped data (such as findi
     
 - **The outer function:** The window function, like `SUM(...) OVER(...)` or `AVG(...) OVER(...)`, takes those grouped results and calculates the rolling metric across the sequence.
     
+If not using "ROWS BETWEEN N PRECEDING AND CURRENT ROW", It may implicitly use "RANGE BETWEEN N PRECEDING AND CURRENT ROW". When meeting same order key, will include this row and all the rows with the same key val
+`RANGE` 会将 `ORDER BY` 排序键相同的行视为 peers（同级行）。当窗口结束位置是 `CURRENT ROW` 时，窗口会包含当前行以及所有与当前行排序键相同的行。
 
 **Typical structure for rolling metrics on grouped data:**
 
@@ -466,3 +469,46 @@ FROM Products
 GROUP BY ProductName
 ```
 1. **Unpivot (Columns to rows):** Converting wide tables into long format by flattening column-based values into rows.
+
+### NULL IN WHERE will lead DROP
+Think about null for edge case, NULL comparison return UNKNOWN, Never with = for NULL
+```SQL
+SELECT COUUNT(*)
+FROM orders
+WHERE status NOT IN ('shipped', NULL)
+
+SELECT COUUNT(*)
+FROM orders
+WHERE status <> 'ship' OR status IS NULL
+
+SELECT COUUNT(*)
+FROM orders
+WHERE COALESCE(status, 'none') <> "shipped"
+```
+
+### UNION. UNION ALL, EXCEPT, INTERSECT
+```
+SELECT user_id FROM users_today
+EXCEPT SELECT user_id FROM users_yesterday
+
+SELECT user_id FROM users_today
+INTERSECT SELECT user_id FROM users_yesterday
+```
+
+### cross join lateral
+对左侧表的每一行执行一次 允许右侧子查询引用左侧当前列 若右侧没有结果 左侧也不返回（LEFT JOIN LITERAL右侧没结果左侧也会返回）
+
+每行取topn的记录
+```SQL
+
+SELECT c.catagory, t.product_name, t.revenus
+FROM categories c
+CROSS JOIN LATERAL (
+	SELECT product_name, revenue
+	FROM products p
+	WHERE p.category = c.category
+	ORDER BY revenue DESC
+	LIMIT 3
+)AS t
+
+```

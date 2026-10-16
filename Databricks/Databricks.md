@@ -404,13 +404,43 @@ CONSTRAINT pk_aqi PRIMARY KEY (station_id, measurement_time)
 
 ALTER TABLE order DROP CONSTRAIN timestamp_inrange
 
-
-
 SCD (Slowly Changing Dimensions)
 Type 0 :No changed allow
 Type 1: Overwrite
 Type 2: New record with old ones
 
+```SQL
+-- 先保存发生变化的客户
+CREATE TEMP TABLE changed_customers AS
+SELECT src.*
+FROM staging_customer src
+LEFT JOIN dim_customer tgt
+  ON tgt.customer_id = src.customer_id
+ AND tgt.is_current = TRUE
+WHERE tgt.state <> src.state;
+
+-- 关闭旧版本
+UPDATE dim_customer tgt
+SET
+  end_date = CURRENT_DATE,
+  is_current = FALSE
+WHERE tgt.is_current = TRUE
+  AND EXISTS (
+    SELECT 1
+    FROM changed_customers c
+    WHERE c.customer_id = tgt.customer_id
+  );
+
+-- 插入新版本
+INSERT INTO dim_customer (
+  customer_id, name, state,
+  effective_date, end_date, is_current
+)
+SELECT
+  customer_id, name, state,
+  CURRENT_DATE, NULL, TRUE
+FROM changed_customers;
+```
 For SCD2:
 Add current, effective date, end date in the table
 

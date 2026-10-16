@@ -130,6 +130,9 @@ sizes = ["S", "M", "L"]
 
 # Generate all color-size combinations
 inventory = [(color, size) for color in colors for size in sizes]
+
+by_id = {r['id']: r for r in rows}
+regions = {r['region'] for r in rows}
 ```
 
 1. `remove(value)`: Deletes the _first_ occurrence of a specific value. If the value isn't found, Python raises a `ValueError`. While `remove()` handles single items, later we will combine these techniques to learn how to remove duplicates from a list in Python efficiently.
@@ -685,6 +688,25 @@ first_item = next(cursor)
 second_item = next(cursor)
 ```
 
+enumerate
+`enumerate(iterable, start=0)` 返回索引和值组成的元组
+```python
+fruits = ["apple", "banana", "orange"]
+
+for index, fruit in enumerate(fruits):
+    print(index, fruit)
+```
+
+Python 的 `zip()` 用来把多个可迭代对象中相同位置的元素配对，返回一个迭代器，每次产出一个 tuple。
+```python
+names = ["Alice", "Bob", "Charlie"]
+scores = [90, 85, 95]
+
+result = zip(names, scores)
+
+print(list(result))
+# [('Alice', 90), ('Bob', 85), ('Charlie', 95)]
+```
 generator
 Avoid storing all values in memory. 适合处理**无限数据、超大文件、streaming 数据**：它不需要一次性把所有结果放进内存。
 We create a generator by using the `yield` keyword instead of `return`. When Python executes a function that contains `yield`, the following sequence occurs:
@@ -730,6 +752,9 @@ integers = (int(item) for item in valid_items)
 # Consume the pipeline
 print(f"Sum of valid integers: {sum(integers)}")
 ```
+
+sum([r['amount'] for r in rows])  # []：列表推导式
+sum(r['amount'] for r in rows)  # ()：生成器表达式(save memory, )
 
 Iterator class
 To make an object compatible with a `for` loop, it must follow the iterator protocol. This protocol requires two special dunder methods:

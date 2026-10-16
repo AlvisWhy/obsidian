@@ -10,7 +10,7 @@ Create container called Application master on driver
 | -------- | ----------------- | ------------------------------------------- |
 | **属于谁**  | 集群（Cluster）       | Spark Application                           |
 | **表示什么** | **机器（Node）或节点角色** | **运行进程（Process）**，在 YARN 上通常运行在 Container 中 |
-
+1 core works on one partition at a time
 
 **Driver Node** has the python wrapper and java wrapper, after wrapping, send the code to the spark core.
 With pyspark
@@ -22,15 +22,16 @@ If using UDF or other pycodes，the **worker node** will each have a python work
 Else Worker Node do not need py env
 
 
-Transformations
+Transformations（lazy）
 Narrow: select(), filter(), withColumn(), drop
 Can be parallel on data partitions
 
 Wide: join(), agg()
+broadcast join is not wide operation
 perform after data grouped from multiple partitions
 
 Actions
-read() write() collect() take() 
+read() write() collect() take() show() foreach()
 
 1 Each Action create a new job, driver create a plan
 

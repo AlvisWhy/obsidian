@@ -1124,6 +1124,23 @@ def robust_decorator(func):
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
     return wrapper
+    
+# with **context 接收任意数量的关键字参数，并把它们收集成一个字典（dict）
+
+def my_function(**context):
+    print(context)
+
+my_function(name="Alice", age=25, city="Taipei")
+# 也可用于传参
+def greet(name, age):
+    print(f"{name} is {age} years old")
+
+context = {
+    "name": "Alice",
+    "age": 25
+}
+
+greet(**context)
 ```
 
 **parameterized decorator** is actually a function that accepts arguments and _returns a decorator_. This outer function is often called a **decorator factory** because its sole job is to manufacture the actual decorator based on the settings we provide.

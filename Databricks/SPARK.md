@@ -54,7 +54,7 @@ With spark 2.0, we combined all of these context, using spark session
 
 Code(narrow/ wide operation) -> optimization(in driver node)-> actions.      (Lazy evaluation)
 
-DRIVER: Validate Analysis-> Logic plan -> optimized logic plan -> physical plans -> cost model chose a plan
+DRIVER:  Unresolved Logic plan( 将sql转换成逻辑计划结构) -> Analyzed logical plan(查找表 解析列 确定类型 解析函数)-> Optimized logic plan(使用优化 AQE pruning ，join optimize) -> Physical plans -> cost model chose a plan
 -> WORKER 
 ```
 DATAframe.explain()
@@ -87,6 +87,13 @@ df = df.repartition(2)
 ```
 
 By default, spark create 200 partitions for wide transform
+the ideal size for each partition is 128~256 MB each
+```python
+target_mb= 128
+shuffle_input_gb = 200
+parts = (shuffle_input_gb * 1024) // target_mb
+spark.conf.set("spark.sql.shuffle.partitions", parts)
+```
 
 repartition(numofpartitions, cols). Hash based partition
 repartitionByRange(numofpartitions, cols) Range of values based partitioning. Using data sampling for partition ranges.
@@ -117,8 +124,9 @@ one task -> one partition
 when group by, first add partition id, conduct local count to reduce data transformation, then shuffle and do final count 
 
 3 Mange Data skew
+
 ==spark.sql.adaptive.enable = true==
-==spark.sql.adaptive.skewJoin.enable = true==
+==spark.sql.adaptive.skewJoin.enabled = true==
 ==spark.sql.adaptive.skewJoin.skewedPartitonFactor=5==. Consider skew 5 times than median 
 ==spark.sql.adaptive.skewJoin.skewedPartitonThresholdInBytes = 256MB== Consider skew 5 times than 256 MB
 
@@ -221,6 +229,7 @@ physical plan --->(AQE)--->  final plan
 Cache & Persist
 Lazy operation
 Caching is a special type of persist, to save the data in memory.
+cash use default level MEMORY_AND_DISK 
 
 for RDD storage is memory only. Using DataFrames, default is Memory_AND_DISK
 Persist helps us to persist the data in memory and disk (as per our needs)
@@ -444,7 +453,8 @@ GC frequency will be high, but pause will be lower
 Big Executor
 GC frequency will be less, but pause will be high
 
-Bucketing
+Bucketing(bucketing 是文件级别 把hash值相同列存到一个文件里)
+bucketid = hash(col_val) mode bucket_num
 
 按照 JOIN KEY 的 hash，把数据提前分成固定数量的桶，这样 JOIN 时可以让相同 key 的数据直接去对应的桶里匹配，减少 shuffle。
 

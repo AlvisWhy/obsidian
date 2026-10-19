@@ -816,3 +816,10 @@ Use this function to receive all the events and handle them with the hook
 def event_handler(event:dict):
 	
 ```
+
+Lineage
+```SQL
+SELECT source_table_full_name, target_table_full_name
+FROM system.access.table_lineage
+WHERE target_table_full_name = 'prod.sales.daily_revenue'
+```

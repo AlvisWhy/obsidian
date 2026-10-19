@@ -224,6 +224,19 @@ see which key be heavily used
 Canonical Event Table（原始事件表）
 保留标准化后的完整航班事件，作为数据来源。
 
+bigquery row based policy
+Target row can only be accessed by users with access
+```SQL
+DECLARE current_user STRING; 
+SET current_user = SESSION_USER(); 
+-- HR 
+EXECUTE IMMEDIATE CONCAT( 
+'CREATE ROW ACCESS POLICY hr_access ON ps_lab.employees ', 
+'GRANT TO ("user:', current_user, '") ', 
+'FILTER USING (TRUE)' 
+);
+
+```
 ### Embedding database in BQ
 
 文本

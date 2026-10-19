@@ -129,7 +129,7 @@ case class DataMetric(
 )
 ```
 DataAction
-定义orphanrecorddataaction, dfdataaction, dfadditionaldataaction,dfaggregationdataaction, becoreafterdataaction, countdataaction.几类继承basedataaction 可以同时记录对数据的操作
+定义orphanrecorddataaction, dfdataaction, dfadditionaldataaction,dfaggregationdataaction, beforeafterdataaction, countdataaction.几类继承basedataaction 可以同时记录对数据的操作
 包含dataactiontype rawdatapath dataframe和reasonkey
 
 其中
@@ -138,8 +138,6 @@ Dfdataaction: using countV, reson记录raw_datainput
 ```join + orphan split
 val joinDF = dedupDF.join(msterdf, Seq("customer_id"), "left")
 val orphanDf = joinedDF.filter("master_key is null")
-
-
 ```
 becoreafterdataaction: using before.count - after.count, reason 记录过滤掉的数量或去充的id
 dfadditionaldataaction：-count， reason代表backfill的数量回填
@@ -154,12 +152,12 @@ orphanrecorddataaction: union后统一count, reason 代表missin_master_key
 3 校验层 检验指标
 input= output + filter +deduplicate + orphan
 不等直接返回fail + 差值原因
-先计算subetid的 再计算总的
+先计算subsetid的 再计算总的
 
 4 统计报警
 
 总体：
-每个spark job在自己的进程内用datareoncrunner收集action 生成datarecpnreport
+每个spark job在自己的进程内用datareoncrunner收集action 生成datareconreport
 job结束前用saveDatareconreport把报告写到输入出目录下
 如果有孤儿数据再写一个路径 
 到汇总任务的时候用reconsummarygenerator生成汇总记录

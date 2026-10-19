@@ -81,3 +81,24 @@ python operator:
 	templates_dict
 	 op_args
 	 kwargs
+
+Use "backfill = True" will crash the system when large
+Use "max_active_run" to control max dag run parallelly
+
+```python
+default_args = {
+		'retries': 3,
+		'retry_delay': timedelta(minutes=5)
+		'retry_exponential_backoff': True
+	}
+with DAG(
+	'etl',
+	default_args = default_args,
+	schedule='@daily',
+	catchup = False,
+	max_active_run = 2
+) as dag:
+	extracg >> load >> publish
+	
+
+```

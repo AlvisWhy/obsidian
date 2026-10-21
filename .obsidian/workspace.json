@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "system design/9.md",
+                "file": "Apache Iceberg/Basic.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "9"
+              "title": "Basic"
             }
           }
         ]
@@ -196,34 +196,35 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "3924df99a475bcc3",
+  "active": "dcaa64c5a25edcf8",
   "lastOpenFiles": [
+    "Databricks/Databricks.md",
+    "Databricks/configuration.md",
+    "Databricks/command.md",
+    "Databricks/Architecture.md",
+    "Databricks/compute.md",
+    "Apache Iceberg/Basic.md",
+    "Kafka/kafka.md",
+    "system design/4.md",
+    "system design/5.md",
+    "system design/6.md",
+    "system design/7.md",
     "system design/8.md",
     "system design/9.md",
-    "Databricks/Databricks.md",
-    "Databricks/Pyspark.md",
-    "Databricks/configuration.md",
-    "GSNA_Project/airflow repo.md",
-    "system design/7.md",
-    "system design/6.md",
-    "system design/2.md",
+    "interview_coding/shell.md",
+    "behavioral test.md",
+    "take-home task.md",
+    "interview_coding/python.md",
     "system design/1.md",
-    "system design/5.md",
-    "system design/4.md",
-    "Kafka/未命名.md",
+    "interview_coding/SQL.md",
+    "Apache Iceberg",
+    "Databricks/Pyspark.md",
+    "GSNA_Project/airflow repo.md",
+    "system design/2.md",
     "system design/3.md",
     "GSNA_Project/ETLRepo.md",
-    "Databricks/Architecture.md",
     "Airflow/Code.md",
     "Airflow/Architecture.md",
-    "python basic/python.md",
-    "python basic/pandas.md",
-    "GCP/Data.md",
-    "Databricks/SPARK.md",
-    "Databricks/SparkSQL.md",
-    "Databricks/Project setup.md",
-    "Databricks/compute.md",
-    "Databricks/command.md",
     "system design",
     "未命名.canvas",
     "interview_coding",
@@ -234,7 +235,6 @@
     "Hadoop",
     "Jenkins",
     "Shell",
-    "AZure/未命名",
-    "未命名.base"
+    "AZure/未命名"
   ]
 }

@@ -173,12 +173,12 @@ gcloud pubsub subscriptions create account-events-sub \
   --enable-message-ordering
 ```
 
-|需求|Kafka|Google Cloud Pub/Sub|
-|---|---|---|
-|防止传输层重试造成重复|幂等 Producer：PID + sequence number|没有完全对应的 Producer 幂等开关；应用可使用稳定事件 ID|
-|Exactly-once 消费 / 投递|事务 + offset 原子提交 + `read_committed` 等机制|Subscription 开启 Exactly-once delivery|
-|保证相关消息顺序|使用相同 key 路由到同一 partition|使用相同 `ordering_key`，并启用 Subscription 排序|
-|业务层防重复|业务 ID + 幂等写入|业务 ID + 幂等写入|
+| 需求                   | Kafka                                           | Google Cloud Pub/Sub                    |
+| -------------------- | ----------------------------------------------- | --------------------------------------- |
+| 防止传输层重试造成重复          | 幂等 Producer：PID + sequence number               | 没有完全对应的 Producer 幂等开关；应用可使用稳定事件 ID      |
+| Exactly-once 消费 / 投递 | 事务 + offset 原子提交 + consumer`read_committed` 等机制 | Subscription 开启 Exactly-once delivery   |
+| 保证相关消息顺序             | 使用相同 key 路由到同一 partition                        | 使用相同 `ordering_key`，并启用 Subscription 排序 |
+| 业务层防重复               | 业务 ID + 幂等写入                                    | 业务 ID + 幂等写入                            |
 ```python
 counts = events
 			.withWatermark("event_time", "10 minutes")

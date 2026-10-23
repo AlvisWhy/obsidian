@@ -460,3 +460,6 @@ gcloud pubsub subscriptions create orders-sub \
 ```
 
 Kafka 按partition有序， 相同key放在同一partition
+
+workflow template
+只用一个集群调度不同job

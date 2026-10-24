@@ -198,17 +198,20 @@
   },
   "active": "3924df99a475bcc3",
   "lastOpenFiles": [
-    "Kafka/kafka.md",
+    "未命名.md",
     "Apache Iceberg/Basic.md",
+    "未命名",
+    "GCP/Data.md",
+    "Databricks/Databricks.md",
+    "Databricks/compute.md",
+    "AZure/Compute.md",
+    "Kafka/kafka.md",
     "system design/9.md",
     "system design/8.md",
-    "GCP/Data.md",
     "GCP/Data Goverance.md",
-    "Databricks/Databricks.md",
     "Databricks/configuration.md",
     "Databricks/command.md",
     "Databricks/Architecture.md",
-    "Databricks/compute.md",
     "system design/4.md",
     "system design/5.md",
     "system design/6.md",
@@ -223,8 +226,6 @@
     "Databricks/Pyspark.md",
     "GSNA_Project/airflow repo.md",
     "system design/2.md",
-    "system design/3.md",
-    "GSNA_Project/ETLRepo.md",
     "system design",
     "未命名.canvas",
     "interview_coding",
@@ -234,7 +235,6 @@
     "ES",
     "Hadoop",
     "Jenkins",
-    "Shell",
-    "AZure/未命名"
+    "Shell"
   ]
 }

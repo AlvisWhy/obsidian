@@ -18,7 +18,7 @@ catalog pointer -> metadata.json -> manifest list -> manifest -> parquet
 ice berg separate data from the catalog, delta keep the log besides the data
 
 For schema evolution
-iceberg behave better in renaming col and chaing type than databricks
+iceberg behave better in renaming col and changing type than databricks
 for databricks(have to enable column mapping mode before creating table)
 
 Iceberg and repartition the new data within same table and keep previous partition without rewriting
@@ -350,7 +350,7 @@ spark.sql(
 		PARTITION BY(region)
 	"""
 )
-...
+
 ```
 
 Apache Polaris REST Catalog 是接口标准，Polaris 是实现这个标准的服务之一，管理多系统操作iceberg的catalog
@@ -441,3 +441,128 @@ partitionBy()` 决定数据写到哪个分区目录；`repartition()` 决定数�
 For streaming jobs
 use checkpoint to combine multiple workers and use x minute checkpoint to submit the data to iceberg
 daily compaction to deal with small files
+
+run time compaction/ daily schedule compaction/ auto compact
+
+Delete methods
+
+1 Position Delete
+已经知道目标行在哪个文件、哪个位置时，很适合直接记录删除位置。
+例如：读取数据文件后，执行某个更新操作，已经确定要替换的行。
+read cheap， write cost much。
+删除的时候写文件指向删除目标的index。
+
+2 Equality Delete
+更适合用列值描述要删除的记录，不需要把原文件行号作为删除条件。
+例如：CDC 消息告诉引擎需要删除 `id=102`，引擎可根据 `id` 作为 equality field 生成删除记录
+write cheap，read cost much。可定时清理
+
+Debezium setup for cdc
+
+postgreSQL 使用的是 WAL（Write-Ahead Log）+ Logical Decoding（逻辑解码）。
+```SQL
+ALTER SYSTEM SET wal_level = 'logical' --提供逻辑解码所需的信息，支持逻辑复制和 CDC。
+ALTER SYSTEM SET max_replication_slots = 10 --设置最多可以同时存在多少个 replication slots
+ALTER SYSTEM SET max_wal_sender = 10 --设置最多可以同时运行多少个 WAL sender 进程
+
+CREATE PUBLICATION debezium_pub FOR ALL TABLES
+SELECT pg_create_logical_replication_slot('debezium', 'pgoutput')
+```
+postgres -> Debezium -> Avro/json in schema registry-> Kafka topic -> iceberg table
+check schema registry for schema consistency
+
+For mergeing
+1 filter by latest time ranking, merging is heavy computing task
+2 schema may mismatch after the evolution
+
+predicate pushdown and projection pushdown
+
+|对比|Predicate Pushdown|Projection Pushdown|
+|---|---|---|
+|优化对象|行|列|
+|对应 SQL|`WHERE`|`SELECT`|
+|目的|减少需要处理的行|减少需要读取的列|
+|典型例子|`WHERE country = 'NL'`|`SELECT order_id, amount`|
+|Parquet 优化方式|统计信息、过滤器、跳过 Row Group 等|只读取需要的列数据|
+
+what does not pushdown
+complex UDF predicate
+subquery predicates
+cross row agg like lead/lag
+predicate on derived col
+
+1 partition pruning 
+2 file stats pruning
+3 row group pruning。Parquet 文件的元数据记录了每个 Row Group 的 `id` 最小值和最大值。
+为了能够正常pruning，避免filter的时候使用函数包裹
+use explain to check pruning（只能看partition和projection pruning的情况，无法看到file/row
+group pruning）
+
+`EXPLAIN`查看基本物理执行计划
+`EXPLAIN EXTENDED`查看 Parsed、Analyzed、Optimized、Physical 等计划阶段
+`EXPLAIN FORMATTED`以更易读的结构展示物理计划及节点详情
+`EXPLAIN COST`查看优化计划及可用的统计信息、估算成本
+
+```
+== Physical Plan ==
+*(1) Project [customer_id#12, amount#13]
++- *(1) Filter (isnotnull(amount#13) AND (amount#13 > 100))
+   +- *(1) ColumnarToRow
+      +- BatchScan orders [customer_id#12, amount#13, order_date#10, country#11]
+         RuntimeFilters: []
+         DataFilters: [isnotnull(country#11), (country#11 = NL),
+                       isnotnull(amount#13), (amount#13 > 100)]
+         PartitionFilters: [(order_date#10 >= 2026-10-01),
+                            (order_date#10 < 2026-11-01)]
+         PushedFilters: [IsNotNull(country), EqualTo(country,NL),
+                         IsNotNull(amount), GreaterThan(amount,100)]
+         ReadSchema: struct<customer_id:bigint,amount:double,
+                            order_date:date,country:string>
+
+```
+`PartitionFilters`
+有分区过滤
+查看是否出现分区列的范围或等值条件。它是判断 Partition Pruning 的重要线索。
+`PushedFilters`
+过滤条件已下推
+查看 `EqualTo`、`GreaterThan` 等条件是否被传递给数据源；它不直接证明实际跳过了多少数据。
+`ReadSchema`
+检查列裁剪
+看扫描阶段读取了多少列，以及有没有不必要的宽列。
+`Exchange`
+检查 Shuffle
+如果计划里出现 `Exchange hashpartitioning(...)`，通常意味着需要重新分布数据，例如为了 Join 或聚合。单纯的过滤查询一般不需要 Shuffle。
+
+iceberg metadata tables
+mytable.snapshots     get every snapshot
+mytable.history     get full commit log
+mytable.files         get every data file with col stats, can get file_size_in_byte for table
+
+avg size below 100MB is a problem
+
+mytable.partitions        get partition-level summary
+mytable.manifests         get manifest level stats and counts
+
+Time Travel
+Keep at least one snapshot and expire snapshots older than 5 days
+SET TBLPROPERTIES: history.expire.max-snapshot-age-ms
+
+```
+SELECT .... VERSION AS OF 1234
+SELECT .... TIMESTAMP AS OF "2026-04-01 12:00:00"
+SELECT .... FROM orders.branch_audit
+```
+
+To rewrite table to solve small files
+
+```
+CALL system.rewrite_data_files(
+    table => 'orders',
+    strategy => 'sort',
+    options => map(
+        'target-file-size-bytes', '268435456'
+    )
+);
+```
+
+注意：Iceberg 的标准参数名称是 `options`，不是 `option`。

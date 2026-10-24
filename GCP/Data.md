@@ -41,6 +41,21 @@ DataStore/FireStore（100TiB）
 just like MONGO DB
 Use index.yaml create index for complex search.
 
+When creating index
+use manual created index according to the search method
+不要把搜索不想关的创建索引避免cross join索引爆炸
+```yaml
+indexes:
+	-kind: Movie
+		Properities:
+		 -name: actors
+		  name: date
+	-kind: Movie
+		Properiteis:
+		 -name: type
+		  name: date
+```
+
 BigQuery User: (roles/bigquery.user) When applied to a dataset, this role provides the ability to read the dataset's metadata and list tables in the dataset. When applied to a project, this role also provides the ability to run jobs, including queries, within the project. A principal with this role can enumerate their own jobs, cancel their own jobs, and enumerate datasets within a project. **Additionally, allows the creation of new datasets within the project; the creator is granted the BigQuery Data Owner role(roles/bigquery.dataOwner) on these new datasets.** Lowest-level resources where you can grant this role: Dataset BigQuery Job User: (roles/bigquery.jobUser) Provides permissions to run jobs, including queries, within the project. Lowest-level resources where you can grant this role: Project
 
 Datastore

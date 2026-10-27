@@ -121,6 +121,17 @@ Can scan or mask PII data
           ▼            ▼            ▼
        Masking      Tokenization  Redaction
 
+ Confidence Level：DLP 有多确定？
+
+DLP 对每个 Finding 提供 `likelihood`，也就是匹配置信度。它不是数据敏感程度，也不是检测准确率的百分比。
+
+VERY_UNLIKELY 极不可能 匹配信号很弱，误报风险最高
+UNLIKELY 不太可能 误报风险较高
+POSSIBLE 有可能 有一些匹配信号；默认最低阈值
+LIKELY 很可能 匹配信号较强，误报风险较低
+VERY_LIKELY 极有可能 匹配信号最强，误报风险最低
+
+
 Dataprep: graphic data washing, less used
 Dataprex: better tool to operate on data.
 
@@ -252,6 +263,17 @@ EXECUTE IMMEDIATE CONCAT(
 );
 
 ```
+
+Data sharing in BQ
+共享数据通常不需要复制，订阅者通过关联资源访问发布者的数据。
+
+| 对比       | Authorized View    | Analytics Hub                                |
+| -------- | ------------------ | -------------------------------------------- |
+| 主要用途     | 控制某个 View 可以访问底层数据 | 发布、发现和订阅数据产品                                 |
+| 典型场景     | 同一组织内，只开放部分客户字段    | 跨团队、跨项目或跨组织共享数据                              |
+| 是否需要复制数据 | 不需要                | 通常不需要                                        |
+| 核心机制     | View 授权与 IAM       | Exchange、Listing、Subscription、Linked Dataset |
+
 ### Embedding database in BQ
 
 文本
@@ -478,3 +500,7 @@ Kafka 按partition有序， 相同key放在同一partition
 
 workflow template
 只用一个集群调度不同job
+
+RAG
+Document AI transfer the pdf file into txts
+pdf table -> chunk table -> embedding table

@@ -276,6 +276,8 @@ SORT ORDER VS ZORDER
     
 - Z-Order：将多个列的值映射到多维空间中的 Z-order 曲线，让不同列的值在物理布局上尽可能具有局部性。适合多col的filter
 
+measure the pruning after zroder, if improve over 30%, it is necessary for zordering
+
 Rest api for open lakehouse
 
 3 layers of API
@@ -395,7 +397,7 @@ Create temp branch before going to prod
 
 ```SQL
 ALTER TABLE catalog.schema.orders
-CREATE BRANCH wap_branch
+CREATE BRANCH wap_branch FROM main
 
 SET spark.wap.branch = 'wap_branch'
 
@@ -421,7 +423,26 @@ CALL catalog.system.fast_forward(
 	'wap_branch'
 )
 
+-- Add tag on current snapshot
+ALTER TABLE prod.db.orders
+CREATE TAG `prod_v1`
+-- Add tag for target version
+AS OF VERSION 125
+RETAIN 365 DAYS;
+
+-- Read by tag
+SELECT * FROM orders.tag_prod_v1
+
+--drop tag
+ALTER TABLE catalog.schema.orders
+DROP TAG prod_v1
+
+ALTER TABLE catalog.schema.orders
+DROP BRANCH wap_branch
+
 ```
+Add tag for audit checkpoint,
+add tag before risky operations
 
 compaction on write
 ```SQL
@@ -555,7 +576,10 @@ SELECT .... FROM orders.branch_audit
 
 To rewrite table to solve small files
 
-```
+```SQL
+
+CALL system.rewrite_data_files(table => 'orders', strategy => 'binpack')
+
 CALL system.rewrite_data_files(
     table => 'orders',
     strategy => 'sort',
@@ -565,4 +589,71 @@ CALL system.rewrite_data_files(
 );
 ```
 
-注意：Iceberg 的标准参数名称是 `options`，不是 `option`。
+- `binpack`(daily)：主要将较小的数据文件合并、重新组织成接近目标大小的文件，减少小文件问题。
+no reorder, cost lowest
+- `sort`(weekly)：按照表的排序规则对数据排序后重写文件，除了改善文件大小，还可能改善查询时的文件裁剪效果。
+- z-order for multiple column dimensional pruning while filtering. need more compute. 
+```SQL
+CALL system.rewrite_data_files(
+	table   =>   'orders',
+	strategy =>   'sort',
+	sort_order => 'zorder(customer_id, product_id)'
+	where => 'event_date >= current_date - interval 30 days'
+)
+
+```
+
+used not more than 4 cols. used better for high cardinal cols.
+not used for partition columns
+
+```SQL
+ALTER TABLE orders WRITE ORDERED BY (timestamp, region)
+
+CALL system.rewrite_data_files (
+	table => 'orders',
+	strategy => 'sort',
+	sort_order => 'timestamp, region',
+	where => 'event_time < current_date -interval 7 days'
+)
+
+```
+
+Clear data
+
+Clear snapshot older than a week
+```SQL
+CALL system.expire_snapshots(table=>'order', older_than=>now()-interval 7 days)
+
+-- or set history.expire.max-snapshot-age-ms=604800000
+-- or set history.expire.min_snapshots-to-keep = 5
+```
+
+只要 Branch 仍然引用某个 Snapshot，Iceberg 的 `expire_snapshots` 就会考虑这个引用，不会简单地因为 Snapshot 过期就把它删除。Branch和tag用于保护snapshot不被删除
+```SQL
+-- Drop unused branches after retention, can check which branch is not cleared
+SELECT * FROM mytable.ref WHERE branch_age > 30 days
+```
+Orphan files causes:
+1 failed commits 2 crashed jobs 3 concurrent retries 4 buggy rewrite
+```SQL
+CALL system.remove_orphen_files(table=>'orders', older_than=>now() - interval 7 days)
+
+```
+Set the threshold for in flight writing files which are not committed 
+
+mainfest count could slow down operations
+```SQL
+CALL system.rewrite_manifests(table=>'order')
+-- Combine small files into targeted size manifests default 8MB per file
+
+-- check the mainfest counts
+SELECT count(*) FROM mytable.manifests
+-- should not be above 1000 per table 
+```
+
+Rollback
+```SQL
+CALL system.roll_back_to_snapshot(table=>'orders', snapshot_id =>12345)
+
+CALL system.roll_back_to_snapshot(table=>'orders', timestamp =>'2026-04-01')
+```

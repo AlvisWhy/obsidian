@@ -6,7 +6,7 @@ gsutil -L list gs:// (calculate the gcs hash)
 
 Data transfer:
 Appliance: for local large than 10Tb
-storage transfer service: 3 party
+storage transfer service: 3 party. Suitable for 大批量规模传输 不适合单个大文件传输
 gsutil: small
 
 Backup:

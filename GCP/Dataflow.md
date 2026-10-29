@@ -326,7 +326,38 @@ Combine Functinon
 > **能 Combine 就不要先 GroupByKey + 自己聚合。**  
 > 因为 `CombinePerKey` 可以利用 **partial combining** 减少 Shuffle 数据量。
 
+Side Input
 
+`CoGroupByKey` 适合两边都是主数据流、需要按 key 关联；`Side Input` 适合一份数据作为辅助数据，供主数据流查询使用。
+```python
+user_lookup = pipeline | "UserLookup" >> beam.Create([
+    ("u1", "Alice"),
+    ("u2", "Bob"),
+])
+
+orders = pipeline | "Orders" >> beam.Create([
+    ("u1", "order1"),
+    ("u2", "order2"),
+])
+
+user_dict = (
+    user_lookup
+    | "BuildDict" >> beam.combiners.ToDict()
+)
+
+enriched = (
+    orders
+    | "EnrichOrders" >> beam.Map(
+        lambda order, users: (
+            order[0],
+            order[1],
+            users.get(order[0])
+        ),
+        users=beam.pvalue.AsSingleton(user_dict)
+    )
+)
+
+```
 optimization
 
 1 Using dataflow insight
@@ -762,3 +793,13 @@ snapshot for pubsub
 for kafka infinite replay
 2 使用update create mapping for it 可以继承原来的部分
 3 write to 2 pipelines and 2 targets
+
+  Fusion 的Reshuffle 解决办法
+
+| 对比项    | Fusion        | Reshuffle               |
+| ------ | ------------- | ----------------------- |
+| 目的     | 减少中间处理开销      | 重新分发数据、阻止融合             |
+| 数据内容   | 不改变业务数据       | 通常保持逻辑数据不变              |
+| 数据交换   | 尽可能避免不必要的交换   | 通常引入数据重新分布              |
+| 性能影响   | 减少开销，但可能限制并行度 | 可能提升并行度，也会增加 shuffle 成本 |
+| 是否一定更快 | 不一定           | 不一定                     |

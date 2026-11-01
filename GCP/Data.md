@@ -601,6 +601,23 @@ pdf table -> chunk table -> embedding table
 
 Biglake allow bq to query datg in S3 and azure blod storage
 
+- External Table：用户自己需要拥有 BigQuery 表权限和底层数据源访问权限。
+    
+- BigLake Table：通过 Cloud Resource Connection 和 Service Account 实现 Access Delegation，用户可以只获得 BigQuery 表权限，而不直接获得底层存储权限。
+
+|对比维度|External Table|BigLake Table|
+|---|---|---|
+|实际数据位置|外部存储|外部存储|
+|元数据|BigQuery|BigQuery|
+|Access Delegation|不支持|支持|
+|底层 GCS 权限|用户需要|Connection SA 需要|
+|表级权限管理|支持|支持|
+|Row-level Security|不支持 BigLake 的增强能力|支持|
+|Column-level Security|不支持 BigLake 的增强能力|支持|
+|Dynamic Data Masking|不支持 BigLake 的增强能力|支持（GCS）|
+|DML 修改外部数据|不支持|不支持|
+|数据存储位置|外部|外部|
+
 BigQuery 的 AEAD crypto deletion（加密式刪除，也叫 crypto-shredding）是一種刪除敏感資料的方式：不一定要把加密後的資料從資料表中刪除，而是銷毀解密所需的金鑰，讓資料永久無法被解密。
 
 第一步：為客戶建立 keyset。

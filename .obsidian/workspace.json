@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "GCP/Dataflow.md",
+                "file": "dbt/dbt.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Dataflow"
+              "title": "dbt"
             }
           }
         ]
@@ -106,13 +106,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "SQL/SQL Syntax.md",
+                "file": "dbt/dbt.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "SQL Syntax 的大纲"
+              "title": "大纲"
             }
           },
           {
@@ -177,8 +177,7 @@
               "title": "添加笔记属性"
             }
           }
-        ],
-        "currentTab": 4
+        ]
       }
     ],
     "direction": "horizontal",
@@ -198,16 +197,19 @@
   },
   "active": "3924df99a475bcc3",
   "lastOpenFiles": [
-    "GCP/Data Goverance.md",
+    "python basic/python.md",
+    "python basic/pandas.md",
+    "dbt/dbt.md",
     "GCP/Data.md",
+    "dbt",
+    "GCP/Dataflow.md",
+    "GCP/Data Goverance.md",
     "Databricks/Databricks.md",
     "GCP/Storage.md",
-    "GCP/Dataflow.md",
     "Apache Iceberg/Basic.md",
     "GCP/Cloud logging.md",
     "符号英文.md",
     "未命名.canvas",
-    "未命名",
     "Databricks/compute.md",
     "AZure/Compute.md",
     "Kafka/kafka.md",
@@ -223,9 +225,6 @@
     "interview_coding/shell.md",
     "behavioral test.md",
     "take-home task.md",
-    "interview_coding/python.md",
-    "system design/1.md",
-    "interview_coding/SQL.md",
     "Apache Iceberg",
     "system design",
     "interview_coding",

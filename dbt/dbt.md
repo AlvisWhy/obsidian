@@ -48,3 +48,5 @@ seed folder
 run with cmd dbt seed
 CSV files that can be loaded directly in lakehouse as tables
 
+5 kinds of materializations
+view table incremental 

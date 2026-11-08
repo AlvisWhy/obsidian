@@ -13,7 +13,7 @@ Create document in an index
 
 To add the dataset to the `products` index and perform various tasks, you can utilize the following `_bulk` request. This `_bulk` request will create 50 documents, representing different products, in the `products` index.
 
-```
+```http
 POST /products/_bulk
 { "index": { "_id": "1" } }
 { "name": "iPhone 13", "description": "The latest smartphone from Apple. Features a powerful A15 Bionic chip and a stunning Super Retina XDR display.", "price": 999, "category": "Electronics", "brand": "Apple", "color": "Midnight Blue", "availability": "In Stock", "rating": 4.5, "seller": "Apple Store" }

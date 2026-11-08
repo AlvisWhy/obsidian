@@ -11,14 +11,10 @@
             "id": "3924df99a475bcc3",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "python basic/python.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "python"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "关系图谱"
             }
           }
         ]
@@ -86,7 +82,8 @@
               "title": "Source Control"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -106,7 +103,6 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "python basic/python.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -197,34 +193,34 @@
   },
   "active": "3924df99a475bcc3",
   "lastOpenFiles": [
-    "dbt/dbt.md",
-    "GCP/Dataflow.md",
-    "python basic/python.md",
-    "python basic/pandas.md",
-    "GCP/Data.md",
-    "dbt",
-    "GCP/Data Goverance.md",
-    "Databricks/Databricks.md",
-    "GCP/Storage.md",
-    "Apache Iceberg/Basic.md",
-    "GCP/Cloud logging.md",
-    "符号英文.md",
-    "未命名.canvas",
+    "GSNA_Project/ETLRepo.md",
     "Databricks/compute.md",
-    "AZure/Compute.md",
-    "Kafka/kafka.md",
-    "system design/9.md",
-    "system design/8.md",
-    "Databricks/configuration.md",
-    "Databricks/command.md",
-    "Databricks/Architecture.md",
-    "system design/4.md",
-    "system design/5.md",
-    "system design/6.md",
-    "system design/7.md",
-    "interview_coding/shell.md",
-    "behavioral test.md",
-    "take-home task.md",
+    "Databricks/SPARK Core Structure.md",
+    "Databricks/SparkSQL.md",
+    "Databricks/Databricks Architecture.md",
+    "Databricks/Databricks Commands & DBUtils.md",
+    "Airflow/Architecture.md",
+    "interview_coding/OVERVIEW.md",
+    "interview_coding/dags.md",
+    "Hadoop/Hadoop.md",
+    "Databricks/Databricks Asset Bundles (DAB).md",
+    "Databricks/Databricks Overall.md",
+    "Databricks/Project setup(x).md",
+    "Databricks/Pyspark.md",
+    "Airflow/Code.md",
+    "dbt/dbt.md",
+    "ES/API.md",
+    "GSNA_Project/airflow repo.md",
+    "GCP/GCP Data Engineer Services.md",
+    "GCP/GCP Cloud logging.md",
+    "GCP/cloud build.md",
+    "GCP/AI.md",
+    "GCP/Cloud IDS.md",
+    "GCP/GCP Streaming Data.md",
+    "GCP/GCP IAM and security.md",
+    "GCP/GCP Dataflow.md",
+    "dbt",
+    "未命名.canvas",
     "Apache Iceberg",
     "system design",
     "interview_coding",

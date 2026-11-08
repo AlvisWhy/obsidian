@@ -49,4 +49,14 @@ run with cmd dbt seed
 CSV files that can be loaded directly in lakehouse as tables
 
 5 kinds of materializations
-view table incremental 
+view table incremental ephemeral(sub query pieces, temporary need) snapshot
+
+- `view`：只保存查询 SQL，不保存查询结果。
+    
+- `table`：保存查询结果，每次重新构建整张表。
+    
+- `incremental`：保存查询结果，只处理新增或更新的数据。
+    
+- `ephemeral`：不创建数据库对象，作为 CTE 嵌入下游 SQL。
+    
+- `snapshot`：追踪数据历史变化，保存数据过去和现在的版本。
